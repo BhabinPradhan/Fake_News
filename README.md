@@ -1,2 +1,3 @@
-# Fake_News
-Detect fake news using 7 models
+# After cloning, download images from Google Drive and place them at:
+multimodal_dataset/fakeddit_subset/image_folder/
+multimodal_dataset/fakeddit_subset/validation_image/

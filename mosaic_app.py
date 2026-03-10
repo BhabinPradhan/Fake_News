@@ -34,7 +34,6 @@ st.set_page_config(
 # ── Model loading ─────────────────────────────────────────────────────────────
 # @st.cache_resource tells Streamlit: run this function once, cache the result,
 # and reuse the same object on every page rerun and for every user session.
-# Without this, the 12 models would reload from disk on every button click.
 # show_spinner=False means we handle the loading UI ourselves.
 @st.cache_resource(show_spinner=False)
 def load_manager():
@@ -44,8 +43,7 @@ def load_manager():
 
 # ── CSS ───────────────────────────────────────────────────────────────────────
 # st.markdown() renders any string as HTML in the page.
-# unsafe_allow_html=True is required whenever you pass real HTML/CSS —
-# by default Streamlit escapes it for safety.
+# unsafe_allow_html=True is required whenever you pass real HTML/CSS 
 # Everything inside <style> tags is standard CSS that overrides Streamlit's defaults.
 st.markdown("""
 <style>
@@ -94,7 +92,7 @@ html, body, [class*="css"] { font-family: 'Syne', sans-serif; }
    Small uppercase label with a cyan left border — used above INPUT and RESULT */
 .card-title {
     font-family: 'Space Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em;
-    text-transform: uppercase; color: #5c5c7a; margin-bottom: 1.25rem;
+    text-transform: uppercase; color: #9c9cb5; margin-bottom: 1.25rem;
     border-left: 2px solid #00d4ff; padding-left: 0.75rem;
 }
 
@@ -104,7 +102,7 @@ html, body, [class*="css"] { font-family: 'Syne', sans-serif; }
 .stTextArea label, .stTextInput label, .stFileUploader label {
     font-family: 'Space Mono', monospace !important;
     font-size: 0.62rem !important; letter-spacing: 0.18em !important;
-    text-transform: uppercase !important; color: #5c5c7a !important;
+    text-transform: uppercase !important; color: #9c9cb5 !important;
 }
 
 /* ── Analyze button ──
@@ -311,7 +309,7 @@ st.markdown("""
 
 if "manager_loaded" not in st.session_state:
     st.markdown(
-        '<div class="load-banner">INITIALISING 12 EXPERT MODELS...</div>',
+        '<div class="load-banner">INITIALISING EXPERT MODELS...</div>',
         unsafe_allow_html=True,
     )
     try:
@@ -325,20 +323,20 @@ else:
     manager = load_manager()  # instant — already cached, no disk I/O
     st.markdown(
         '<div class="load-banner" style="color:#00d084;border-color:#00d084;animation:none;">'
-        '✓ 12 EXPERT MODELS READY</div>',
+        'EXPERT MODELS READY</div>',
         unsafe_allow_html=True,
     )
 
 
-# ── Layout: two equal columns ─────────────────────────────────────────────────
-# st.columns([1, 1]) splits the page into two equal-width columns.
-# The "with col:" syntax means everything inside that block renders in that column.
+# Layout has two equal columns..
+# st.columns([1, 1]) splits the page into two equal-width columns
+# The "with col:" syntax means everything inside that block renders in that column
 # gap="large" adds horizontal spacing between the columns.
 st.markdown("<br>", unsafe_allow_html=True)
 col_in, col_res = st.columns([1, 1], gap="large")
 
 
-# ── Left column: inputs ───────────────────────────────────────────────────────
+# Left column: inputs
 with col_in:
     st.markdown('<div class="card-title">INPUT</div>', unsafe_allow_html=True)
 
@@ -377,8 +375,8 @@ with col_in:
         st.markdown("""
         <div class="url-placeholder" style="margin-top:1.75rem;">
             <div style="font-size:1.1rem;margin-bottom:0.3rem;color:#6b6b8a">LINK</div>
-            <div style="color:#6b6b8a">URL SCRAPING</div>
-            <span style="color:#4a4a6a;font-size:0.6rem">Teammate integration<br>in progress</span>
+            <div style="color:#9c9cb5">URL SCRAPING</div>
+            <span style="color:#9c9cb5;font-size:0.6rem">Teammate integration<br>in progress</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -441,7 +439,7 @@ with col_res:
         # inside a fixed-height box.
         st.markdown("""
         <div style="height:300px;display:flex;align-items:center;justify-content:center;
-                    color:#3a3a5a;font-family:Space Mono;font-size:0.7rem;letter-spacing:0.15em;
+                    color:#9c9cb5;font-family:Space Mono;font-size:0.7rem;letter-spacing:0.15em;
                     border:1px dashed #1e1e2e;border-radius:8px;">
             AWAITING INPUT
         </div>
@@ -451,8 +449,8 @@ with col_res:
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div style="text-align:center;margin-top:4rem;padding-top:2rem;border-top:1px solid #1e1e2e;
-            font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.15em;color:#3a3a5a;">
+            font-family:'Space Mono',monospace;font-size:0.58rem;letter-spacing:0.15em;color:#9c9cb5;">
     MOSAIC — AI-POWERED MULTIMODAL FAKE NEWS DETECTION &nbsp;|&nbsp;
-    12 EXPERT ENSEMBLE &nbsp;|&nbsp; WEIGHTED VOTING
+    EXPERT ENSEMBLE &nbsp;|&nbsp; WEIGHTED VOTING
 </div>
 """, unsafe_allow_html=True)

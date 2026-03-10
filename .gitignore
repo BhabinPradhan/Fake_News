@@ -1,0 +1,15 @@
+venv/
+.venv/
+multimodal_dataset/
+weibo_data/
+data/
+dataset/
+save/
+models/
+__pycache__/
+*.pth
+*.pt
+*.pyc
+*.tmp
+.env
+*.log

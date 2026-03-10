@@ -386,14 +386,14 @@ with col_in:
     pil_image = None
     if up_file:
         pil_image = Image.open(up_file).convert("RGB")
-        st.image(pil_image, use_container_width=True)
+        st.image(pil_image, width='stretch')
 
     st.markdown("<div style='margin-top:0.75rem'></div>", unsafe_allow_html=True)
 
     # st.button renders a clickable button.
     # Returns True only on the rerun immediately after the user clicks it, False otherwise.
     # use_container_width=True stretches it to fill the column width.
-    run_analysis = st.button("RUN ANALYSIS", use_container_width=True)
+    run_analysis = st.button("RUN ANALYSIS", width='stretch')
 
 
 # ── Right column: results ─────────────────────────────────────────────────────

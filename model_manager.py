@@ -20,38 +20,33 @@ class ModelManager:
     def __init__(self):
         print("Initializing Global Model Manager...")
 
-        # --- 1. Initialize MoPeD Experts ---
         self.moped_experts = {
-            "xfacta": MopedInference("MoPeD/best_moped_xfacta.pth",        dataset_type='english', device=torch.device('cuda:0')),
-            "snopes": MopedInference("MoPeD/best_moped_snopes.pth",         dataset_type='english', device=torch.device('cuda:0')),
-            "weibo":  MopedInference("MoPeD/best_moped_weibo.pth",          dataset_type='weibo',   device=torch.device('cuda:0')),
-            "mmhl":   MopedInference("MoPeD/best_moped_mmhl_fold0.pth",     dataset_type='english', device=torch.device('cuda:1')),
+            "xfacta": MopedInference("weights/best_moped_xfacta.pth",        dataset_type='english', device=torch.device('cuda:0')),
+            "snopes": MopedInference("weights/best_moped_snopes.pth",         dataset_type='english', device=torch.device('cuda:0')),
+            "weibo":  MopedInference("weights/best_moped_weibo.pth",          dataset_type='weibo',   device=torch.device('cuda:0')),
+            "mmhl":   MopedInference("weights/best_moped_mmhl_fold0.pth",     dataset_type='english', device=torch.device('cuda:1')),
         }
 
-        # --- 2. Initialize COOLANT Experts ---
         self.coolant_experts = {
-            "xfacta": CoolantInference("best_model_coolant_xfacta.pth",     device=torch.device('cuda:1')),
-            "snopes": CoolantInference("best_model_coolant_multimodal.pth",  device=torch.device('cuda:1')),
-            "weibo":  CoolantInference("best_coolant_weibo.pth",             device=torch.device('cuda:2')),
-            "mmhl":   CoolantInference("best_model_coolant_mmhl_fold4.pth",  device=torch.device('cuda:2')),
+            "xfacta": CoolantInference("weights/best_model_coolant_xfacta.pth",    device=torch.device('cuda:1')),
+            "snopes": CoolantInference("weights/best_model_coolant_multimodal.pth", device=torch.device('cuda:1')),
+            "weibo":  CoolantInference("weights/best_coolant_weibo.pth",            device=torch.device('cuda:2')),
+            "mmhl":   CoolantInference("weights/best_model_coolant_mmhl_fold4.pth", device=torch.device('cuda:2')),
         }
 
-        # --- 3. Initialize EMAF Experts ---
         self.emaf_experts = {
-            "xfacta": EmafInference("best_emaf_xfacta.pth",    lang='en', device=torch.device('cuda:2')),
-            "snopes": EmafInference("best_emaf_multimodal.pth", lang='en', device=torch.device('cuda:3')),
-            "weibo":  EmafInference("best_emaf_paper.pth",      lang='zh', device=torch.device('cuda:3')),
-            "mmhl":   EmafInference("best_emaf_mmhl_fold3.pth", lang='en', device=torch.device('cuda:3')),
+            "xfacta": EmafInference("weights/best_emaf_xfacta.pth",    lang='en', device=torch.device('cuda:2')),
+            "snopes": EmafInference("weights/best_emaf_multimodal.pth", lang='en', device=torch.device('cuda:3')),
+            "weibo":  EmafInference("weights/best_emaf_weibo.pth",      lang='zh', device=torch.device('cuda:3')),
+            "mmhl":   EmafInference("weights/best_emaf_mmhl_fold3.pth", lang='en', device=torch.device('cuda:3')),
         }
 
-        # --- 4. Initialize MCAN Experts ---                    
-        # Adjust .pth paths to where your weights live.
-        # dataset_type controls BERT variant: 'weibo' → chinese BERT, anything else is bert-base-uncased
         self.mcan_experts = {
-            "xfacta": McanInference("pthfiles_mcan/best_mcan_xfacta.pth", dataset_type='english', device=torch.device('cuda:0')),
-            "snopes": McanInference("pthfiles_mcan/best_mcan_snopes_6.pth", dataset_type='english', device=torch.device('cuda:1')),
-            "weibo":  McanInference("pthfiles_mcan/best_mcan_weibo.pth",  dataset_type='weibo',   device=torch.device('cuda:2')),
-            "mmhl":   McanInference("pthfiles_mcan/best_mcan_mmhl_fold0.pth",   dataset_type='english', device=torch.device('cuda:3')),
+            "xfacta": McanInference("weights/best_mcan_xfacta.pth",     dataset_type='english', device=torch.device('cuda:0')),
+            "snopes": McanInference("weights/best_mcan_snopes_6.pth",   dataset_type='english', device=torch.device('cuda:1')),
+            # Temporarily disabled — retraining in progress (architecture divergence)
+            # "weibo": McanInference("weights/best_mcan_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:2')),
+            "mmhl":   McanInference("weights/best_mcan_mmhl_fold0.pth", dataset_type='english', device=torch.device('cuda:3')),
         }
         # Tuned from validation benchmarks.
         self.expert_reliability = {
@@ -74,7 +69,8 @@ class ModelManager:
             "MCAN (mmhl)"      : 0.00,
 
             #Weibo. This one had Mixed / Weak Signal ─
-            "MCAN (weibo)"     : 0.60,
+            #  "weibo" temporarily disabled — retraining in progress
+            # "MCAN (weibo)"     : 0.60,
             "EMAF (weibo)"     : 0.10, # weak but correct direction
             "COOLANT (weibo)"  : 0.05, # near coin-flip
             "MoPeD (weibo)"    : 0.00, # zero signal (frozen)
@@ -89,7 +85,7 @@ class ModelManager:
         self.min_vote_strength = 0.20
         self.min_agreement     = 0.65
 
-        print("All 16 experts loaded and ready.")  
+        print("All experts loaded and ready.")  
 
     # Language routing since some experts are trained on Chinese data and may underperform on English, and vice versa.
     def _detect_language(self, text):
@@ -253,6 +249,7 @@ class ModelManager:
             "most_confident_model": best_overall['model'],
             "best_model_score":    best_overall["margin"],
             "language_detected":   lang,
+            "used_real_image":     True,  
             "vote_strength":       vote_strength,
             "agreement":           agreement_weight,
             "is_uncertain":        is_uncertain,

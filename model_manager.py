@@ -61,8 +61,7 @@ class ModelManager:
         self.mcan_experts = {
             "xfacta": McanInference("weights/best_mcan_xfacta.pth",     dataset_type='english', device=torch.device('cuda:0')),
             "snopes": McanInference("weights/best_mcan_snopes_6.pth",   dataset_type='english', device=torch.device('cuda:3')),
-            # Temporarily disabled — retraining in progress (architecture divergence)
-            # "weibo": McanInference("weights/best_mcan_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:2')),
+            "weibo": McanInference("weights/best_mcan_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:2')),
             "mmhl":   McanInference("weights/best_mcan_mmhl_fold0.pth", dataset_type='english', device=torch.device('cuda:3')),
         }
 

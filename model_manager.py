@@ -364,7 +364,7 @@ class ModelManager:
             experts[f"MCAN ({name})"]    = expert
         return experts
 
-manager = ModelManager()
+#manager = ModelManager()   #Comment this out because this line runs when the file is imported by Streamlit, causing all 16 models to load into GPU memory twice 
 
 
 # ── Quick smoke-test when run directly ────────────────────────────────────────

@@ -210,11 +210,11 @@ def main():
 
     # ── Optional: calibrate label order first ───────────────────────────────
     if args.calibrate:
-        calib_cases = [c for c in cases if c.get("expected")][:10]
-        if len(calib_cases) >= 3:
+        calib_cases = [c for c in cases if c.get("expected")][:30]
+        if len(calib_cases) >= 10:
             print("\nRunning label-order calibration on first 10 labeled cases...")
             report = manager.fit_label_order_from_benchmark(
-                calib_cases, min_cases=3, min_improvement=0.15, auto_apply=True
+                calib_cases, min_cases=10, min_improvement=0.20, auto_apply=True
             )
             print(f"{'Model':<25} {'Order':>6}  {'Normal':>7}  {'Flipped':>8}")
             print("-" * 55)

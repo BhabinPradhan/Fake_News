@@ -343,8 +343,13 @@ with col_in:
     # st.text_area renders a multi-line text box.
     # label_visibility="collapsed" hides the label visually (we use card-title instead).
     # The return value is whatever string the user has typed — updates live on every keypress.
+    # Pre-fills the text box with scraped article text after a URL is submitted.
+    # Falls back to empty string if nothing has been scraped yet.
+    # Without this, the text area would stay blank even after a successful scrape.
+    default_text = st.session_state.pop("pending_text", st.session_state.get("scraped_text", ""))
     text_input = st.text_area(
         "Post Content",
+        value=default_text,
         placeholder="Paste the text or headline here...",
         height=150,
         label_visibility="collapsed",
@@ -360,33 +365,57 @@ with col_in:
         up_file = st.file_uploader("Upload Image (required)", type=["jpg", "png", "webp", "jpeg"])
 
     with url_col:
-        # ── Scraper integration point ─────────────────────────────────────
-        # When teammate's scraper is ready, delete this st.markdown block
-        # and replace with:
-        #
-        #   from scraper import scrape
-        #   url_input = st.text_input("Or paste a URL")
-        #   if url_input:
-        #       scraped    = scrape(url_input)
-        #       text_input = scraped["text"]
-        #       img_path   = scraped["image_path"]
-        #
-        # ─────────────────────────────────────────────────────────────────
-        st.markdown("""
-        <div class="url-placeholder" style="margin-top:1.75rem;">
-            <div style="font-size:1.1rem;margin-bottom:0.3rem;color:#6b6b8a">LINK</div>
-            <div style="color:#9c9cb5">URL SCRAPING</div>
-            <span style="color:#9c9cb5;font-size:0.6rem">Teammate integration<br>in progress</span>
-        </div>
-        """, unsafe_allow_html=True)
+        # Only fire the scraper when the URL is new — not on every Streamlit rerun.
+        # Without the session_state guard, this would re-scrape on every keypress
+        # in the text area or any other widget interaction.
+        from scraper import get_scraped_data
+        url_input = st.text_input("Paste Link", placeholder="Enter URL...", key="url_input_value")
+        if url_input and url_input != st.session_state.get("last_scraped_url"):
+            with st.spinner("Extracting content..."):
+                try:
+                    scraped = get_scraped_data(url_input)
+                    st.session_state["scraped_text"]     = scraped["text"]
+                    st.session_state["scraped_image"]    = scraped["image"]
+                    st.session_state["last_scraped_url"] = url_input
+                    st.session_state["pending_text"]     = scraped["text"]
+                    st.rerun()
+                    # Rerun so the text_area and image preview pick up the new values.
+                    # They render above this block in the script, so without a rerun
+                    # they would stay empty until the next user interaction.
+                except Exception as e:
+                    # Mark the URL as attempted even on failure so it doesn't
+                    # loop trying to scrape the same broken URL repeatedly.
+                    st.session_state["last_scraped_url"] = url_input
+                    st.error(f"Scrape failed: {e}")
 
-    # If a file was uploaded, open it with PIL and show a preview.
+    # Resolve the image to pass to the ensemble.
+    # Priority: manual upload > scraped image > None (text-only fallback handled by model_manager)
     # .convert("RGB") normalises any image format (PNG with alpha, CMYK, etc.) to plain RGB
     # so the model always receives a consistent input format.
     pil_image = None
     if up_file:
+        # Manual upload — open and convert to RGB, show preview
         pil_image = Image.open(up_file).convert("RGB")
         st.image(pil_image, width='stretch')
+    elif st.session_state.get("scraped_image"):
+        # Scraped image from URL — already a PIL RGB object from scraper.py, show preview
+        pil_image = st.session_state["scraped_image"]
+        st.image(pil_image, width='stretch')
+        # Extract the domain from the URL and show it as a source badge
+        url = st.session_state.get("last_scraped_url", "")
+        domain = url.split("/")[2] if url.startswith("http") else url
+        st.markdown(
+            f'<div style="font-family:Space Mono,monospace;font-size:0.58rem;'
+            f'color:#5c5c7a;letter-spacing:0.1em;margin-top:0.3rem;">'
+            f'⬡ SOURCE: {domain}</div>',
+            unsafe_allow_html=True,
+        )
+        # Wipe all scrape-related session state so the user can enter a fresh URL
+        # without the old content bleeding through into the next analysis
+        if st.button("✕ CLEAR", key="clear_scrape"):
+            for k in ("scraped_text", "scraped_image", "last_scraped_url", "pending_text", "url_input_value"):
+                st.session_state.pop(k, None)
+            st.rerun()
 
     st.markdown("<div style='margin-top:0.75rem'></div>", unsafe_allow_html=True)
 
@@ -403,7 +432,7 @@ with col_res:
         # Validation: require both text and image before running
         if not text_input.strip():
             st.warning("Please provide text input.")
-        elif not up_file:
+        elif not up_file and not st.session_state.get("scraped_image"): #  This only runs when up_file is None. If a file is uploaded, it takes priority and the scraped image logic is completely skipped.
             st.warning("Please upload an image — both text and image are required.")
         else:
             # st.spinner shows an animated loading indicator while the indented block runs.

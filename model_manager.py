@@ -4,11 +4,10 @@ import sys
 from PIL import Image
 import torch
 
-# Bridge the gap to the MoPeD subdirectory
 sys.path.append(os.path.join(os.getcwd(), "MoPeD"))
-# Bridge the gap to the MCAN subdirectory (add if wrapper lives in its own folder)
 sys.path.append(os.path.join(os.getcwd(), "MCAN"))
-
+sys.path.append(os.path.join(os.getcwd(), "COOLANT"))
+sys.path.append(os.path.join(os.getcwd(), "EMAF"))
 # Import your verified wrappers
 from moped_wrapper import MopedInference
 from coolant_wrapper import CoolantInference

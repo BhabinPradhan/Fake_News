@@ -61,8 +61,7 @@ class ModelManager:
         self.mcan_experts = {
             "xfacta": McanInference("weights/best_mcan_xfacta.pth",     dataset_type='english', device=torch.device('cuda:0')),
             "snopes": McanInference("weights/best_mcan_snopes_6.pth",   dataset_type='english', device=torch.device('cuda:3')),
-            # Temporarily disabled — retraining in progress (architecture divergence)
-            # "weibo": McanInference("weights/best_mcan_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:2')),
+            "weibo": McanInference("weights/best_mcan_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:2')),
             "mmhl":   McanInference("weights/best_mcan_mmhl_fold0.pth", dataset_type='english', device=torch.device('cuda:3')),
         }
 
@@ -126,8 +125,8 @@ class ModelManager:
 
             # MVAE
             "MVAE (xfacta)":     1.00,  # strong discrimination
-            "MVAE (weibo)":      1.00,  # excellent discrimination
-            "MVAE (mmhl)":       1.00,  # good discrimination
+            "MVAE (weibo)":      0.00,  # collapsed R=0.00 F=1.00 on all inputs
+            "MVAE (mmhl)":       0.00,  # collapsed R=0.00 F=1.00 on all inputs
 
             # ATTRNN 
             "ATTRNN (xfacta)":   1.00,  # good discrimination

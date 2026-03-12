@@ -378,6 +378,7 @@ with col_in:
                     st.session_state["scraped_image"]    = scraped["image"]
                     st.session_state["last_scraped_url"] = url_input
                     st.session_state["pending_text"]     = scraped["text"]
+                    st.session_state["scrape_warning"]   = scraped.get("warning")
                     st.rerun()
                     # Rerun so the text_area and image preview pick up the new values.
                     # They render above this block in the script, so without a rerun
@@ -410,11 +411,15 @@ with col_in:
             f'⬡ SOURCE: {domain}</div>',
             unsafe_allow_html=True,
         )
+
+        if st.session_state.get("scrape_warning"):
+            st.warning(st.session_state["scrape_warning"])
         # Wipe all scrape-related session state so the user can enter a fresh URL
         # without the old content bleeding through into the next analysis
-        if st.button("✕ CLEAR", key="clear_scrape"):
-            for k in ("scraped_text", "scraped_image", "last_scraped_url", "pending_text", "url_input_value"):
+        if st.button("CLEAR", key="clear_scrape"):
+            for k in ("scraped_text", "scraped_image", "last_scraped_url", "pending_text", "url_input_value", "scrape_warning"):
                 st.session_state.pop(k, None)
+            st.session_state["url_input_value"] = ""
             st.rerun()
 
     st.markdown("<div style='margin-top:0.75rem'></div>", unsafe_allow_html=True)

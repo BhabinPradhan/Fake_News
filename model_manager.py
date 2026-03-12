@@ -115,7 +115,7 @@ class ModelManager:
             # MCAN
             "MCAN (snopes)":     1.00,  # best discriminator (gap=0.985)
             "MCAN (xfacta)":     0.00,  # collapsed Fake
-            # "MCAN (weibo)":    0.60,  # disabled pending retrain
+            "MCAN (weibo)":      0.60,  # disabled pending retrain
             "MCAN (mmhl)":       0.00,  # collapsed Fake
 
             # SpotFake 

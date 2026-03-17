@@ -17,7 +17,7 @@ import argparse
 import random
 import pandas as pd
 
-# ── Resolve paths ──────────────────────────────────────────────────────────
+# Handle the paths and imports for ModelManager
 SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
 DATASET_DIR  = os.path.join(SCRIPT_DIR, "multimodel_dataset")
 DEFAULT_CSVS = [
@@ -30,7 +30,7 @@ sys.path.append(os.path.join(SCRIPT_DIR, "MoPeD"))
 from model_manager import ModelManager
 
 
-# ── CSV loader ─────────────────────────────────────────────────────────────
+# Load the CSV and prepare benchmark cases for ModelManager
 
 def load_cases_from_csv(
     csv_path: str,
@@ -58,7 +58,7 @@ def load_cases_from_csv(
 
     df = pd.read_csv(csv_path)
 
-    # Normalise column names (handle minor variations)
+    # We need to be flexible about column names, so we normalize them and look for keywords
     df.columns = [c.strip().lower() for c in df.columns]
     text_col  = next((c for c in df.columns if c in ("content", "text", "caption", "title")), None)
     image_col = next((c for c in df.columns if c in ("image", "image_path", "img")), None)
@@ -161,8 +161,7 @@ def print_results(results: list[dict]):
             print(f"  {label:4s} accuracy: {acc:.0%} ({len(subset)} decided)")
 
 
-# ── CLI entry point ────────────────────────────────────────────────────────
-
+#  Handle the command-line interface and run the benchmark
 def main():
     parser = argparse.ArgumentParser(description="Run ModelManager benchmark from CSV datasets")
     parser.add_argument("--csv",       type=str, default=None,
@@ -178,7 +177,7 @@ def main():
     parser.add_argument("--seed",      type=int, default=42)
     args = parser.parse_args()
 
-    # ── Load cases ──────────────────────────────────────────────────────────
+    # Load the cases from CSV(s)
     if args.csv:
         csv_paths = [args.csv]
     elif DEFAULT_CSVS:
@@ -204,15 +203,15 @@ def main():
         print("No valid cases loaded. Check your CSV paths and image_root.")
         sys.exit(1)
 
-    # ── Init manager ────────────────────────────────────────────────────────
+    # The cases are now ready to be fed into ModelManager for benchmarking...
     print("\nInitializing ModelManager...")
     manager = ModelManager()
 
-    # ── Optional: calibrate label order first ───────────────────────────────
+    # calibrate label order first 
     if args.calibrate:
         calib_cases = [c for c in cases if c.get("expected")][:30]
         if len(calib_cases) >= 10:
-            print("\nRunning label-order calibration on first 10 labeled cases...")
+            print("\nRunning label-order calibration on first 30 labeled cases...")
             report = manager.fit_label_order_from_benchmark(
                 calib_cases, min_cases=10, min_improvement=0.20, auto_apply=True
             )
@@ -222,10 +221,12 @@ def main():
                 flag = " ← FLIPPED" if stats["applied_order"] == "FR" else ""
                 print(f"  {model:<23} {stats['applied_order']:>6}  "
                       f"{stats['normal_acc']:>6.0%}   {stats['flipped_acc']:>7.0%}{flag}")
+            print("\nComputing reliability weights from calibration cases...")
+            manager.compute_reliability_from_benchmark(calib_cases)
         else:
             print("Not enough labeled cases for calibration, skipping.")
 
-    # ── Run benchmark ────────────────────────────────────────────────────────
+    # Run benchmark 
     print(f"\nRunning benchmark on {len(cases)} cases...")
     results = manager.benchmark_prompts(cases)
     print_results(results)

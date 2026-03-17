@@ -31,15 +31,15 @@ st.set_page_config(
 )
 
 
-# ── Model loading ─────────────────────────────────────────────────────────────
+# Model loading
 # @st.cache_resource tells Streamlit: run this function once, cache the result,
 # and reuse the same object on every page rerun and for every user session.
-# show_spinner=False means we handle the loading UI ourselves.
 @st.cache_resource(show_spinner=False)
 def load_manager():
     from model_manager import ModelManager
-    return ModelManager()
-
+    from benchmark_loader import load_cases_from_csv
+    manager = ModelManager()
+    return manager
 
 # ── CSS ───────────────────────────────────────────────────────────────────────
 # st.markdown() renders any string as HTML in the page.
@@ -282,6 +282,74 @@ def render_expert_table(all_scores: list):
             </span>
         </div>""", unsafe_allow_html=True)
 
+# Renders a summary box explaining the verdict, referencing the top supporting experts and their training domains.
+def render_xai_summary(result: dict):
+    verdict    = result["final_verdict"]
+    all_scores = result["all_scores"]
+
+    if verdict == "Uncertain":
+        reason = result.get("uncertainty_reason", "").replace("_", " ")
+        st.markdown(f"""
+        <div style="background:#11111a;border:1px solid #2a2a1a;border-radius:6px;
+                    padding:0.9rem 1rem;margin-top:0.75rem;">
+            <div style="font-family:Space Mono;font-size:0.58rem;color:#5c5c7a;
+                        letter-spacing:0.12em;text-transform:uppercase;
+                        margin-bottom:0.4rem;">WHY UNCERTAIN</div>
+            <div style="font-family:Syne;font-size:0.82rem;color:#c8c87a;line-height:1.6;">
+                The ensemble could not reach a confident decision due to {reason}.
+                This input may fall outside the training distribution of the available models.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
+    # Find top 3 models that voted for the winning verdict, sorted by weight
+    supporters = sorted(
+        [r for r in all_scores if r["predicted_label"] == verdict and r["weight"] > 0.0],
+        key=lambda x: x["weight"] * abs(x["Fake"] - x["Real"]),
+        reverse=True
+    )[:3]
+
+    if not supporters:
+        return
+
+    # Build human-readable model names for the summary
+    model_names = ", ".join(r["model"] for r in supporters)
+
+    # Map dataset names to plain descriptions
+    dataset_descriptions = {
+        "snopes":  "English political fact-checking",
+        "xfacta":  "cross-domain news verification",
+        "weibo":   "Chinese social media",
+        "mmhl":    "medical and health misinformation",
+    }
+
+    # Collect which datasets the top supporters were trained on
+    datasets_mentioned = []
+    for r in supporters:
+        for key, desc in dataset_descriptions.items():
+            if key in r["model"].lower() and desc not in datasets_mentioned:
+                datasets_mentioned.append(desc)
+
+    dataset_str = " and ".join(datasets_mentioned) if datasets_mentioned else "multiple domains"
+
+    color = "#00d084" if verdict == "Real" else "#ff5555"
+
+    st.markdown(f"""
+    <div style="background:#11111a;border:1px solid #1e2e1e;border-radius:6px;
+                padding:0.9rem 1rem;margin-top:0.75rem;">
+        <div style="font-family:Space Mono;font-size:0.58rem;color:#5c5c7a;
+                    letter-spacing:0.12em;text-transform:uppercase;
+                    margin-bottom:0.4rem;">WHY {verdict.upper()}</div>
+        <div style="font-family:Syne;font-size:0.82rem;color:#c8c8d8;line-height:1.6;">
+            Decision driven primarily by
+            <span style="color:{color};font-weight:700;">{model_names}</span>,
+            trained on {dataset_str} datasets.
+            These models showed the strongest and most consistent signal
+            toward a <span style="color:{color};font-weight:700;">{verdict}</span> verdict.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ── Page header ───────────────────────────────────────────────────────────────
 # Rendered once at the top of the page on every rerun.
@@ -461,7 +529,7 @@ with col_res:
             # render_verdict() and render_expert_table() are our helper functions above —
             # they unpack the result dict and emit the HTML for the verdict box and table.
             render_verdict(res)
-
+            render_xai_summary(res)
             # st.expander renders a collapsible section — collapsed by default.
             # Good for detail that doesn't need to be visible immediately.
             with st.expander("Per-Expert Breakdown"):

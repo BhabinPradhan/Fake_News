@@ -27,7 +27,9 @@ from attrnn_wrapper_xfacta import AttRNNInferenceXFacta
 from attrnn_wrapper_weibo  import AttRNNInferenceWeibo
 from attrnn_wrapper        import AttRNNInference                  
 
-
+from spotfake_wrapper_snopes import SpotFakeInferenceSnopes
+from mvae_wrapper_snopes     import MVAEInferenceSnopes
+from attrnn_wrapper_snopes   import AttRNNInferenceSnopes
 class ModelManager:
     def __init__(self):
         print("Initializing Global Model Manager...")
@@ -36,7 +38,7 @@ class ModelManager:
         self.moped_experts = {
             "xfacta": MopedInference("weights/best_moped_xfacta.pth",    dataset_type='english', device=torch.device('cuda:0')),
             "snopes": MopedInference("weights/best_moped_snopes.pth",     dataset_type='english', device=torch.device('cuda:0')),
-            "weibo":  MopedInference("weights/best_moped_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:0')),
+            "weibo":  MopedInference("weights/best_moped_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:1')),
             "mmhl":   MopedInference("weights/best_moped_mmhl_fold0.pth", dataset_type='english', device=torch.device('cuda:1')),
         }
 
@@ -45,103 +47,108 @@ class ModelManager:
             "xfacta": CoolantInference("weights/best_model_coolant_xfacta.pth",    device=torch.device('cuda:0')),
             "snopes": CoolantInference("weights/best_model_coolant_multimodal.pth", device=torch.device('cuda:1')),
             "weibo":  CoolantInference("weights/best_coolant_weibo.pth",            device=torch.device('cuda:2')),
-            "mmhl":   CoolantInference("weights/best_model_coolant_mmhl_fold4.pth", device=torch.device('cuda:2')),
+            "mmhl":   CoolantInference("weights/best_model_coolant_mmhl_fold4.pth", device=torch.device('cuda:3')),
         }
 
         # EMAF
         self.emaf_experts = {
-            "xfacta": EmafInference("weights/best_emaf_xfacta.pth",    lang='en', device=torch.device('cuda:2')),
-            "snopes": EmafInference("weights/best_emaf_multimodal.pth", lang='en', device=torch.device('cuda:3')),
-            "weibo":  EmafInference("weights/best_emaf_weibo.pth",      lang='zh', device=torch.device('cuda:3')),
+            "xfacta": EmafInference("weights/best_emaf_xfacta.pth",    lang='en', device=torch.device('cuda:0')),
+            "snopes": EmafInference("weights/best_emaf_multimodal.pth", lang='en', device=torch.device('cuda:1')),
+            "weibo":  EmafInference("weights/best_emaf_weibo.pth",      lang='zh', device=torch.device('cuda:2')),
             "mmhl":   EmafInference("weights/best_emaf_mmhl_fold3.pth", lang='en', device=torch.device('cuda:3')),
         }
 
-        # MCAN 
-        # dataset_type controls BERT variant: 'weibo' → chinese BERT, else bert-base-uncased
+        # MCAN
         self.mcan_experts = {
-            "xfacta": McanInference("weights/best_mcan_xfacta.pth",     dataset_type='english', device=torch.device('cuda:0')),
-            "snopes": McanInference("weights/best_mcan_snopes_6.pth",   dataset_type='english', device=torch.device('cuda:3')),
-            "weibo": McanInference("weights/best_mcan_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:2')),
+            "xfacta": McanInference("weights/best_mcan_xfacta.pth",    dataset_type='english', device=torch.device('cuda:0')),
+            "snopes": McanInference("weights/best_mcan_snopes_6.pth",   dataset_type='english', device=torch.device('cuda:1')),
+            "weibo":  McanInference("weights/best_mcan_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:2')),
             "mmhl":   McanInference("weights/best_mcan_mmhl_fold0.pth", dataset_type='english', device=torch.device('cuda:3')),
         }
 
         # SpotFake 
-        # weibo: collapsed Fake (0.794 Fake on real input) → reliability 0.00
-        # mmhl:  collapsed Real (0.978 Real on fake input) → reliability 0.00
         self.spotfake_experts = {
             "xfacta": SpotFakeInferenceXFacta("weights/spotfake_xfacta.pth", device=torch.device('cuda:0')),
             "weibo":  SpotFakeInferenceWeibo("weights/spotfake_weibo.pth",   device=torch.device('cuda:1')),
             "mmhl":   SpotFakeInference("weights/best_spotfake_med.pth",     device=torch.device('cuda:2')),
+            "snopes": SpotFakeInferenceSnopes("weights/spotfake_snopes.pth", device=torch.device('cuda:3')),
         }
 
         # MVAE
-        # All three variants discriminate correctly — full weight pending benchmark
         self.mvae_experts = {
-            "xfacta": MVAEInferenceXFacta("weights/mvae_xfacta.pth",  device=torch.device('cuda:2')),
-            "weibo":  MVAEInferenceWeibo("weights/mvae_weibo.pth",     device=torch.device('cuda:3')),
-            "mmhl":   MVAEInference("weights/best_mvae_med.pth",       device=torch.device('cuda:3')),
+            "xfacta": MVAEInferenceXFacta("weights/mvae_xfacta.pth",  device=torch.device('cuda:0')),
+            "weibo":  MVAEInferenceWeibo("weights/mvae_weibo.pth",     device=torch.device('cuda:1')),
+            "mmhl":   MVAEInference("weights/best_mvae_med.pth",       device=torch.device('cuda:2')),
+            "snopes": MVAEInferenceSnopes("weights/mvae_snopes.pth",   device=torch.device('cuda:3')),
         }
 
-        # ATTRNN
-        # weibo: collapsed Fake (0.918 Fake on real input) → reliability 0.00
-        # mmhl:  weak discrimination both ways             → reliability 0.00
+        # ATTRNN 
         self.attrnn_experts = {
             "xfacta": AttRNNInferenceXFacta("weights/attrnn_xfacta.pth", device=torch.device('cuda:0')),
             "weibo":  AttRNNInferenceWeibo("weights/attrnn_weibo.pth",   device=torch.device('cuda:1')),
             "mmhl":   AttRNNInference("weights/best_attrnn_med.pth",     device=torch.device('cuda:2')),
+            "snopes": AttRNNInferenceSnopes("weights/attrnn_snopes.pth", device=torch.device('cuda:3')),
         }
 
         # Per-expert reliability weights
         self.expert_reliability = {
-
             # MoPeD
-            "MoPeD (snopes)":    1.00,  # primary anchor
-            "MoPeD (xfacta)":    0.10,  # collapsed toward Real
-            "MoPeD (weibo)":     0.00,  # frozen at 0.647/0.353 on every input
-            "MoPeD (mmhl)":      0.10,  # biased toward Fake
-
-            # COOLANT 
-            "COOLANT (snopes)":  1.00,  # primary anchor
-            "COOLANT (xfacta)":  0.10,  # collapsed toward Real
-            "COOLANT (weibo)":   0.05,  # near coin-flip
-            "COOLANT (mmhl)":    0.10,  # biased toward Fake
-
-            # EMAF 
-            "EMAF (snopes)":     0.20,  # collapsed Real but soft counterweight
-            "EMAF (xfacta)":     0.00,  # fully collapsed
-            "EMAF (weibo)":      0.10,  # weak but correct direction
-            "EMAF (mmhl)":       0.10,  # biased toward Fake
-
+            "MoPeD (snopes)":     0.53,
+            "MoPeD (xfacta)":     0.33,
+            "MoPeD (weibo)":      0.13,
+            "MoPeD (mmhl)":       0.27,
+            # COOLANT
+            "COOLANT (snopes)":   0.60,
+            "COOLANT (xfacta)":   0.40,
+            "COOLANT (weibo)":    0.00,
+            "COOLANT (mmhl)":     0.00,
+            # EMAF
+            "EMAF (snopes)":      0.33,
+            "EMAF (xfacta)":      0.33,
+            "EMAF (weibo)":       0.20,
+            "EMAF (mmhl)":        0.00,
             # MCAN
-            "MCAN (snopes)":     1.00,  # best discriminator (gap=0.985)
-            "MCAN (xfacta)":     0.00,  # collapsed Fake
-            "MCAN (weibo)":      0.60,  # disabled pending retrain
-            "MCAN (mmhl)":       0.00,  # collapsed Fake
-
-            # SpotFake 
-            "SpotFake (xfacta)": 1.00,  # perfect discrimination on anchor cases
-            "SpotFake (weibo)":  0.00,  # collapsed Fake
-            "SpotFake (mmhl)":   0.00,  # collapsed Real
-
+            "MCAN (snopes)":      0.67,
+            "MCAN (xfacta)":      0.20,
+            "MCAN (weibo)":       0.00,
+            "MCAN (mmhl)":        0.00,
+            # SpotFake
+            "SpotFake (xfacta)":  0.33,
+            "SpotFake (weibo)":   0.00,
+            "SpotFake (mmhl)":    0.07,
+            "SpotFake (snopes)":  0.00,
             # MVAE
-            "MVAE (xfacta)":     1.00,  # strong discrimination
-            "MVAE (weibo)":      0.00,  # collapsed R=0.00 F=1.00 on all inputs
-            "MVAE (mmhl)":       0.00,  # collapsed R=0.00 F=1.00 on all inputs
-
-            # ATTRNN 
-            "ATTRNN (xfacta)":   1.00,  # good discrimination
-            "ATTRNN (weibo)":    0.00,  # collapsed Fake
-            "ATTRNN (mmhl)":     0.00,  # weak discrimination both ways
+            "MVAE (xfacta)":      0.60,
+            "MVAE (weibo)":       0.00,
+            "MVAE (mmhl)":        0.00,
+            "MVAE (snopes)":      0.00,
+            # ATTRNN
+            "ATTRNN (xfacta)":    0.47,
+            "ATTRNN (weibo)":     0.00,
+            "ATTRNN (mmhl)":      0.00,
+            "ATTRNN (snopes)":    0.00,
         }
 
-        # RF: model returns [Real, Fake] — confirmed for all via diagnose()
-        self.label_order_map = {label: "RF" for label in self.expert_reliability.keys()}
+        self.label_order_map = {
+            "MoPeD (mmhl)":      "FR",
+            "COOLANT (xfacta)":  "FR",
+            "COOLANT (mmhl)":    "FR",
+            "EMAF (mmhl)":       "FR",
+            "MCAN (mmhl)":       "FR",
+            "SpotFake (xfacta)": "FR",
+            "MVAE (xfacta)":     "FR",
+            "MVAE (weibo)":      "FR",
+            "ATTRNN (xfacta)":   "FR",
+        }
+        for label in self.expert_reliability.keys():
+            if label not in self.label_order_map:
+                self.label_order_map[label] = "RF"
 
         # Abstain / uncertainty thresholds 
         self.min_vote_strength = 0.20
         self.min_agreement     = 0.65
 
-        print("✓ All experts loaded and ready.")
+        print("All experts loaded and ready.")
 
     # Language routing
     def _detect_language(self, text):
@@ -150,7 +157,7 @@ class ModelManager:
             return 'zh'
         return 'en'
 
-    def _iter_experts(self, lang, has_real_image):
+    def _iter_experts(self, lang, has_real_image, text=""):
         family_weight = {
             "MoPeD":    1.00,
             "COOLANT":  1.00,
@@ -161,10 +168,19 @@ class ModelManager:
             "ATTRNN":   1.00,
         }
 
+        # Here is the core of our routing logic: we adjust weights based on language, domain, and reliability.
         if lang == 'zh':
             domain_weight = {"weibo": 1.00, "xfacta": 0.40, "snopes": 0.40, "mmhl": 0.40}
         else:
             domain_weight = {"weibo": 0.35, "xfacta": 1.00, "snopes": 1.00, "mmhl": 1.00}
+            # Route based on text length — short captions vs article-style text
+            is_short_caption = len(text.split()) < 15
+            if is_short_caption:
+                domain_weight["xfacta"] = 1.20  # xfacta trained on social media style
+                domain_weight["snopes"] = 0.70  # snopes is article-focused
+            else:
+                domain_weight["snopes"] = 1.20  # snopes better for longer news text
+                domain_weight["xfacta"] = 0.70
 
         all_families = [
             ("MoPeD",    self.moped_experts),
@@ -241,7 +257,7 @@ class ModelManager:
         weighted_fake = 0.0
         total_weight  = 0.0
 
-        for model_label, expert, weight in self._iter_experts(lang, True):
+        for model_label, expert, weight in self._iter_experts(lang, True, text):
             res             = expert.predict(text, img)
             real_p, fake_p  = self._normalize_probs(res['Real'], res['Fake'])
             real_p, fake_p  = self._apply_label_order(model_label, real_p, fake_p)
@@ -271,7 +287,20 @@ class ModelManager:
             r["weight"] for r in all_results if r["predicted_label"] == final_verdict
         ) / total_weight
 
-        confidence   = 0.5 + 0.5 * (vote_strength * agreement_weight)
+        # Calculate base confidence 
+        confidence = 0.5 + 0.5 * (vote_strength * agreement_weight)
+
+        # Apply anchor boost logic
+        anchor_models = ["MoPeD (snopes)", "COOLANT (snopes)", "MCAN (snopes)"]
+        anchor_votes = [r for r in all_results if r["model"] in anchor_models]
+        anchor_unanimous = len(anchor_votes) > 0 and all(
+            r["predicted_label"] == final_verdict for r in anchor_votes
+        )
+        
+        if anchor_unanimous:
+            confidence = min(0.99, confidence * 1.10)
+
+        # Determine uncertainty
         is_uncertain = (vote_strength < self.min_vote_strength) or (agreement_weight < self.min_agreement)
 
         uncertainty_reason = None
@@ -300,6 +329,7 @@ class ModelManager:
             "avg_fake":             avg_fake,
             "all_scores":           all_results,
         }
+    
 
     # Batch benchmark
     # It will be important to run `fit_label_order_from_benchmark` on any new batch of cases before interpreting these results, 
@@ -374,6 +404,37 @@ class ModelManager:
                 "applied_order":          self.label_order_map[model_label],
             }
         return report
+    
+    # Lets automatically compute reliability weights from benchmark results, based on accuracy on labeled cases. 
+    # This can be used to update `self.expert_reliability` after running a benchmark with known labels, to better weight the experts in future predictions.
+    def compute_reliability_from_benchmark(self, cases):
+        labeled = [c for c in cases if c.get("expected") in ("Real", "Fake")]
+        if len(labeled) < 10:
+            raise ValueError("Need at least 10 labeled cases to compute reliability.")
+
+        prepared = [{
+            "text":     c["text"],
+            "expected": c["expected"],
+            "img":      self._resolve_input_image(c.get("image_path")),
+        } for c in labeled]
+
+        print(f"\n{'Model':<25} {'Accuracy':>9} {'New Weight':>11}")
+        print("-" * 48)
+
+        for model_label, expert in self._all_experts_flat().items():
+            correct = 0
+            for case in prepared:
+                res            = expert.predict(case["text"], case["img"])
+                real_p, fake_p = self._normalize_probs(res["Real"], res["Fake"])
+                real_p, fake_p = self._apply_label_order(model_label, real_p, fake_p)
+                predicted      = "Fake" if fake_p > real_p else "Real"
+                if predicted == case["expected"]:
+                    correct += 1
+
+            accuracy   = correct / len(prepared)
+            new_weight = max(0.0, (accuracy - 0.5) * 2)
+            self.expert_reliability[model_label] = new_weight
+            print(f"  {model_label:<23} {accuracy:>8.0%} {new_weight:>10.2f}")
 
     # Diagnose
     # This will print detailed per-expert outputs for a single input, before any label-order correction or weighting, to help with error analysis and sanity checks. 

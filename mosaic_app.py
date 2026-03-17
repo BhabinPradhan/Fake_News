@@ -281,8 +281,7 @@ def render_expert_table(all_scores: list):
                 w={row['weight']:.2f}
             </span>
         </div>""", unsafe_allow_html=True)
-
-# Renders a summary box explaining the verdict, referencing the top supporting experts and their training domains.
+# Show the user which models voted Real/Fake and how strongly, while visually dimming the low-weight experts that barely influenced the final decision.
 def render_xai_summary(result: dict):
     verdict    = result["final_verdict"]
     all_scores = result["all_scores"]
@@ -303,7 +302,7 @@ def render_xai_summary(result: dict):
         """, unsafe_allow_html=True)
         return
 
-    # Find top 3 models that voted for the winning verdict, sorted by weight
+    # ── Level 1: which models drove the decision ──
     supporters = sorted(
         [r for r in all_scores if r["predicted_label"] == verdict and r["weight"] > 0.0],
         key=lambda x: x["weight"] * abs(x["Fake"] - x["Real"]),
@@ -313,10 +312,8 @@ def render_xai_summary(result: dict):
     if not supporters:
         return
 
-    # Build human-readable model names for the summary
     model_names = ", ".join(r["model"] for r in supporters)
 
-    # Map dataset names to plain descriptions
     dataset_descriptions = {
         "snopes":  "English political fact-checking",
         "xfacta":  "cross-domain news verification",
@@ -324,7 +321,6 @@ def render_xai_summary(result: dict):
         "mmhl":    "medical and health misinformation",
     }
 
-    # Collect which datasets the top supporters were trained on
     datasets_mentioned = []
     for r in supporters:
         for key, desc in dataset_descriptions.items():
@@ -332,6 +328,15 @@ def render_xai_summary(result: dict):
                 datasets_mentioned.append(desc)
 
     dataset_str = " and ".join(datasets_mentioned) if datasets_mentioned else "multiple domains"
+
+    # ── Level 2: voting pattern summary ──
+    total_active  = len([r for r in all_scores if r["weight"] > 0])
+    strong_voters = len([
+        r for r in all_scores
+        if r["predicted_label"] == verdict
+        and abs(r["Fake"] - r["Real"]) > 0.4
+        and r["weight"] > 0.3
+    ])
 
     color = "#00d084" if verdict == "Real" else "#ff5555"
 
@@ -347,6 +352,12 @@ def render_xai_summary(result: dict):
             trained on {dataset_str} datasets.
             These models showed the strongest and most consistent signal
             toward a <span style="color:{color};font-weight:700;">{verdict}</span> verdict.
+        </div>
+        <div style="font-family:Space Mono;font-size:0.68rem;color:#9c9cb5;
+                    margin-top:0.5rem;border-top:1px solid #1e1e2e;padding-top:0.5rem;">
+            {strong_voters} out of {total_active} active models voted
+            <span style="color:{color};font-weight:700;">{verdict}</span>
+            with high confidence.
         </div>
     </div>
     """, unsafe_allow_html=True)

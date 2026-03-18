@@ -2,14 +2,21 @@
 scraper.py
 ----------
 URL scraper for MOSAIC. Uses Playwright (headless Chromium) to load pages
-like a real browser, which gets around sites that block direct image downloads
-(e.g. CBC, Globe and Mail). Falls back to newspaper3k if Playwright fails.
+like a real browser, which gets around sites that block direct image downloads.
+Falls back to newspaper3k if Playwright fails.
 
-Supports standard news articles only for now. Twitter/Instagram/Facebook/Reddit
-are not currently supported — the user is prompted to paste text manually.
+Supports:
+  - News articles (Playwright + newspaper3k fallback)
+  - Reddit posts (no API key needed — uses Reddit's public .json endpoint)
+  - Facebook public posts (BeautifulSoup)
 
-Includes text cleaning to remove timestamp fragments, short lines, and other
-noise from live update pages that can confuse the ensemble.
+Unsupported (API restrictions):
+  - Twitter/X (paid API only)
+  - Instagram (Meta Graph API required)
+  - TikTok (no text scraping support)
+
+get_scraped_data(url) is a pure standalone function with no Streamlit
+dependencies — safe to call directly from Flask or any other backend.
 """
 
 import re
@@ -42,9 +49,8 @@ def _fetch_image(url):
 
 def _clean_text(text):
     """
-    Cleans scraped article text to remove noise that can confuse the ensemble.
-    Removes timestamps, short fragments, navigation text, and common site
-    boilerplate (e.g. CBC audio disclaimers).
+    Cleans scraped text to remove noise that can confuse the ensemble.
+    Removes timestamps, short fragments, navigation text, and site boilerplate.
     """
     timestamp_pattern = re.compile(
         r'^\s*(\d{1,2}:\d{2}(\s*[APap][Mm])?|Updated.*\d|\d+\s*(min|hour|hrs?|sec)s?\s*ago)\s*$',
@@ -74,15 +80,11 @@ def _clean_text(text):
             continue
         cleaned.append(stripped)
 
-    result = '\n\n'.join(cleaned)
-    return result.strip()
+    return '\n\n'.join(cleaned).strip()
 
 
 def _is_live_page(url):
-    """
-    Detects if a URL is likely a live update / live blog page.
-    These pages produce fragmented text that can mislead the ensemble.
-    """
+    """Detects if a URL is likely a live update / live blog page."""
     live_patterns = [
         'live-update', 'live-blog', 'live-coverage', 'live-news',
         'breaking-news', 'real-time', '/live/', '-live-'
@@ -93,6 +95,7 @@ def _is_live_page(url):
 # ── Platform detection ────────────────────────────────────────────────────────
 
 def _detect_platform(url):
+    """Returns a platform string based on the URL domain."""
     url_lower = url.lower()
     if "reddit.com" in url_lower or "redd.it" in url_lower:
         return "reddit"
@@ -112,17 +115,25 @@ def _detect_platform(url):
 def _scrape_with_playwright(url):
     """
     Loads the page using headless Chromium via Playwright.
-    Extracts the article text using newspaper3k on the rendered HTML,
+    Extracts article text via newspaper3k on the rendered HTML,
     and finds the lead image from og:image or the largest <img> tag.
     Returns (text, image_url) or raises on failure.
     """
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                "--disable-http2",
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+            ]
+        )
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                       "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                       "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            extra_http_headers={"Accept-Language": "en-US,en;q=0.9"}
         )
         page = context.new_page()
 
@@ -131,13 +142,11 @@ def _scrape_with_playwright(url):
         page.route("**/ads/**", lambda route: route.abort())
 
         page.goto(url, wait_until="domcontentloaded", timeout=20000)
-
-        # Wait a moment for lazy-loaded content
         page.wait_for_timeout(2000)
 
         html = page.content()
 
-        # Try to get og:image first (most reliable lead image)
+        # Try og:image first (most reliable lead image)
         og_image = page.evaluate("""
             () => {
                 const og = document.querySelector('meta[property="og:image"]');
@@ -168,26 +177,30 @@ def _scrape_with_playwright(url):
     return raw_text, og_image
 
 
-# ── Main article scraper ──────────────────────────────────────────────────────
+# ── Article scraper ───────────────────────────────────────────────────────────
+
+# Sites known to block Playwright — skip straight to newspaper3k
+_PLAYWRIGHT_BLOCKLIST = [
+    "cbc.ca",
+]
 
 def _scrape_article(url):
     """
     Scrapes a news article. Tries Playwright first for full browser rendering,
-    falls back to newspaper3k direct download if Playwright fails.
-    Cleans text and detects live update pages.
+    falls back to newspaper3k if Playwright fails or is blocklisted.
     """
     image_url = None
     raw_text  = None
-    used_playwright = False
 
-    # Try Playwright first
-    try:
-        raw_text, image_url = _scrape_with_playwright(url)
-        used_playwright = True
-    except Exception as e:
-        print(f"[scraper] Playwright failed ({e}), falling back to newspaper3k")
+    skip_playwright = any(site in url.lower() for site in _PLAYWRIGHT_BLOCKLIST)
 
-    # Fall back to newspaper3k if Playwright failed or got no text
+    if not skip_playwright:
+        try:
+            raw_text, image_url = _scrape_with_playwright(url)
+        except Exception as e:
+            print(f"[scraper] Playwright failed ({e}), falling back to newspaper3k")
+
+    # Fall back to newspaper3k if Playwright failed or was skipped
     if not raw_text or len(raw_text.strip()) < 100:
         try:
             article = Article(url)
@@ -201,15 +214,14 @@ def _scrape_article(url):
     # Clean the text
     full_text = _clean_text(raw_text)
     if len(full_text) < 100:
-        # If cleaning removed too much, use raw title only
         full_text = raw_text.split('\n')[0]
 
     # Download the image
-    image = _fetch_image(image_url)
-    is_blank = (image_url is None or image.size == (224, 224) and
-                image.getpixel((0, 0)) == (255, 255, 255))
+    image   = _fetch_image(image_url)
+    is_blank = image_url is None or (
+        image.size == (224, 224) and image.getpixel((0, 0)) == (255, 255, 255)
+    )
 
-    # Build warning
     warning = None
     if _is_live_page(url):
         warning = (
@@ -225,12 +237,149 @@ def _scrape_article(url):
     return {"text": full_text, "image": image, "warning": warning}
 
 
+# ── Reddit scraper ────────────────────────────────────────────────────────────
+
+def _scrape_reddit(url):
+    """
+    Scrapes a Reddit post using Reddit's public .json endpoint.
+    No API key required — Reddit exposes post data by appending .json to any post URL.
+
+    Extracts:
+      - title + selftext (body) for text posts
+      - title + image URL for image/link posts
+    """
+    # Normalise URL: strip trailing slash then append .json
+    json_url = url.rstrip('/') + '.json'
+    headers  = {"User-Agent": "MOSAIC/1.0"}
+
+    try:
+        resp = requests.get(json_url, headers=headers, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        post = data[0]['data']['children'][0]['data']
+    except Exception as e:
+        raise RuntimeError(f"Failed to fetch Reddit post: {e}")
+
+    # Build text from title + body
+    title    = post.get('title', '').strip()
+    selftext = post.get('selftext', '').strip()
+    full_text = f"{title}\n\n{selftext}".strip() if selftext else title
+
+    if not full_text:
+        raise RuntimeError("Reddit post has no text content.")
+
+    # Try to get image from post URL or preview
+    image     = _blank_image()
+    post_url  = post.get('url', '')
+    image_url = None
+
+    if post_url and any(post_url.lower().endswith(ext) for ext in ('.jpg', '.jpeg', '.png', '.webp', '.gif')):
+        image_url = post_url
+    elif post.get('preview'):
+        try:
+            # Reddit encodes & as &amp; in preview URLs
+            image_url = post['preview']['images'][0]['source']['url'].replace('&amp;', '&')
+        except (KeyError, IndexError):
+            pass
+
+    if image_url:
+        image = _fetch_image(image_url)
+    elif post_url and not any(post_url.lower().endswith(ext) for ext in ('.jpg', '.jpeg', '.png', '.webp', '.gif')):
+        # Link post — try to grab the lead image from the linked article
+        try:
+            article = Article(post_url)
+            article.download()
+            article.parse()
+            if article.top_image:
+                image = _fetch_image(article.top_image)
+                image_url = article.top_image
+        except Exception:
+            pass
+
+    is_blank = image_url is None or (
+        image.size == (224, 224) and image.getpixel((0, 0)) == (255, 255, 255)
+    )
+    warning = (
+        "⚠ No image found in this Reddit post. "
+        "Results may be less reliable — consider uploading an image manually."
+    ) if is_blank else None
+
+    return {"text": full_text, "image": image, "warning": warning}
+
+
+# ── Facebook scraper (Does not work since it needs credentials) ──────────────────────────────────────────────────────────
+
+def _scrape_facebook(url):
+    """
+    Scrapes a public Facebook post using BeautifulSoup.
+    Only works for public posts — private posts and login-gated content
+    will fail gracefully with an error message.
+
+    Extracts post text from Open Graph meta tags and the lead image.
+    """
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        raise RuntimeError("beautifulsoup4 is not installed. Run: pip install beautifulsoup4")
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+        resp.raise_for_status()
+    except Exception as e:
+        raise RuntimeError(
+            f"Could not load Facebook page: {e}. "
+            "This may be a private post — please paste the text manually."
+        )
+
+    soup = BeautifulSoup(resp.text, 'html.parser')
+
+    # Try og:description for post text (most reliable for public posts)
+    text = None
+    og_desc = soup.find('meta', property='og:description')
+    if og_desc and og_desc.get('content'):
+        text = og_desc['content'].strip()
+
+    # Fallback: og:title
+    if not text:
+        og_title = soup.find('meta', property='og:title')
+        if og_title and og_title.get('content'):
+            text = og_title['content'].strip()
+
+    if not text:
+        raise RuntimeError(
+            "Could not extract text from this Facebook post. "
+            "It may be private or login-gated — please paste the text manually."
+        )
+
+    # Get lead image from og:image
+    image_url = None
+    og_image  = soup.find('meta', property='og:image')
+    if og_image and og_image.get('content'):
+        image_url = og_image['content']
+
+    image    = _fetch_image(image_url)
+    is_blank = image_url is None or (
+        image.size == (224, 224) and image.getpixel((0, 0)) == (255, 255, 255)
+    )
+    warning = (
+        "⚠ No image found in this Facebook post. "
+        "Results may be less reliable — consider uploading an image manually."
+    ) if is_blank else None
+
+    return {"text": text, "image": image, "warning": warning}
+
+
+# ── Unsupported platforms ─────────────────────────────────────────────────────
+
 def _unsupported_platform(platform):
     messages = {
-        "reddit":    "Reddit scraping is coming soon. Please copy and paste the post text manually for now.",
         "twitter":   "Twitter/X requires a paid API. Please copy and paste the tweet text manually.",
         "instagram": "Instagram cannot be scraped. Please copy and paste the post text manually.",
-        "facebook":  "Facebook cannot be scraped. Please copy and paste the post text manually.",
         "tiktok":    "TikTok does not support text scraping. Please copy and paste any caption manually.",
     }
     raise RuntimeError(messages.get(platform, f"Unsupported platform: {platform}"))
@@ -238,17 +387,25 @@ def _unsupported_platform(platform):
 
 # ── Main entry point ──────────────────────────────────────────────────────────
 
-def get_scraped_data(url):
+def get_scraped_data(url: str) -> dict:
     """
-    Main scraper entry point. Returns a dict with 'text', 'image', and 'warning' keys.
+    Main scraper entry point. Detects the URL type and routes to the
+    appropriate scraper. Pure standalone function — no Streamlit dependencies.
 
-    - text    : cleaned article text
-    - image   : PIL RGB image (lead image or blank fallback)
-    - warning : optional string shown in the UI (live pages, missing images)
+    Returns a dict with:
+      - text    : cleaned article/post text (str)
+      - image   : PIL RGB image (lead image or blank 224x224 fallback)
+      - warning : optional user-facing warning string, or None
+
+    Raises RuntimeError with a user-friendly message on failure.
     """
     platform = _detect_platform(url)
 
     if platform == "article":
         return _scrape_article(url)
+    elif platform == "reddit":
+        return _scrape_reddit(url)
+    elif platform == "facebook":
+        return _scrape_facebook(url)
     else:
         _unsupported_platform(platform)

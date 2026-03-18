@@ -23,6 +23,15 @@ manager.fit_label_order_from_benchmark(
 
 print("Computing reliability weights...")
 manager.compute_reliability_from_benchmark(calib_cases)
+print("Computing short-text reliability weights...")
+try:
+    manager.compute_short_text_reliability_from_benchmark(
+        calib_cases,
+        max_words=manager.short_text_max_words,
+        min_cases=10,
+    )
+except ValueError as e:
+    print(f"Skipping short-text reliability calibration: {e}")
 
 # ── Now run grid search ────────────────────────────────────────────────
 vote_strengths = [0.10, 0.15, 0.20, 0.25]

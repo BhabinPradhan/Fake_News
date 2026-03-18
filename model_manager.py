@@ -30,6 +30,8 @@ from attrnn_wrapper        import AttRNNInference
 from spotfake_wrapper_snopes import SpotFakeInferenceSnopes
 from mvae_wrapper_snopes     import MVAEInferenceSnopes
 from attrnn_wrapper_snopes   import AttRNNInferenceSnopes
+
+
 class ModelManager:
     def __init__(self):
         print("Initializing Global Model Manager...")
@@ -128,6 +130,12 @@ class ModelManager:
             "ATTRNN (mmhl)":      0.00,
             "ATTRNN (snopes)":    0.00,
         }
+        # Length-aware routing knobs
+        self.short_text_max_words       = 15
+        self.ultra_short_max_words      = 8
+        self.ultra_short_min_agreement  = 0.68
+        # Separate reliability profile for short text (defaults to global until calibrated).
+        self.expert_reliability_short = dict(self.expert_reliability)
 
         self.label_order_map = {
             "MoPeD (mmhl)":      "FR",
@@ -157,7 +165,7 @@ class ModelManager:
             return 'zh'
         return 'en'
 
-    def _iter_experts(self, lang, has_real_image, text=""):
+    def _iter_experts(self, lang, text=""):
         family_weight = {
             "MoPeD":    1.00,
             "COOLANT":  1.00,
@@ -167,6 +175,9 @@ class ModelManager:
             "MVAE":     1.00,
             "ATTRNN":   1.00,
         }
+        word_count       = len(text.split())
+        is_short_caption = word_count < self.short_text_max_words
+        reliability_map  = self.expert_reliability_short if is_short_caption else self.expert_reliability
 
         # Here is the core of our routing logic: we adjust weights based on language, domain, and reliability.
         if lang == 'zh':
@@ -174,7 +185,6 @@ class ModelManager:
         else:
             domain_weight = {"weibo": 0.35, "xfacta": 1.00, "snopes": 1.00, "mmhl": 1.00}
             # Route based on text length — short captions vs article-style text
-            is_short_caption = len(text.split()) < 15
             if is_short_caption:
                 domain_weight["xfacta"] = 1.20  # xfacta trained on social media style
                 domain_weight["snopes"] = 0.70  # snopes is article-focused
@@ -198,7 +208,7 @@ class ModelManager:
                 weight = (
                     family_weight[family] *
                     domain_weight.get(name, 1.0) *
-                    self.expert_reliability.get(label, 1.0)
+                    reliability_map.get(label, self.expert_reliability.get(label, 1.0))
                 )
                 if weight > 0.0:
                     yield label, expert, weight
@@ -251,13 +261,16 @@ class ModelManager:
 
         img  = self._resolve_input_image(image_path)
         lang = self._detect_language(text)
+        word_count = len(text.split())
+        is_short_text = word_count < self.short_text_max_words
+        is_ultra_short = word_count <= self.ultra_short_max_words
 
         all_results   = []
         weighted_real = 0.0
         weighted_fake = 0.0
         total_weight  = 0.0
 
-        for model_label, expert, weight in self._iter_experts(lang, True, text):
+        for model_label, expert, weight in self._iter_experts(lang, text):
             res             = expert.predict(text, img)
             real_p, fake_p  = self._normalize_probs(res['Real'], res['Fake'])
             real_p, fake_p  = self._apply_label_order(model_label, real_p, fake_p)
@@ -291,21 +304,36 @@ class ModelManager:
         confidence = 0.5 + 0.5 * (vote_strength * agreement_weight)
 
         # Apply anchor boost logic
-        anchor_models = ["MoPeD (snopes)", "COOLANT (snopes)", "MCAN (snopes)"]
+        if lang == "zh":
+            anchor_models = ["MoPeD (weibo)", "COOLANT (weibo)", "MCAN (weibo)"]
+        elif is_short_text:
+            # Short-text anchors should reflect social/caption style rather than long-form articles.
+            anchor_models = ["MoPeD (xfacta)", "COOLANT (xfacta)", "MCAN (xfacta)"]
+        else:
+            anchor_models = ["MoPeD (snopes)", "COOLANT (snopes)", "MCAN (snopes)"]
+
         anchor_votes = [r for r in all_results if r["model"] in anchor_models]
         anchor_unanimous = len(anchor_votes) > 0 and all(
             r["predicted_label"] == final_verdict for r in anchor_votes
         )
         
-        if anchor_unanimous:
+        # Avoid boosting confidence for ultra-short text where semantics are usually underspecified.
+        if anchor_unanimous and not is_ultra_short:
             confidence = min(0.99, confidence * 1.10)
 
         # Determine uncertainty
-        is_uncertain = (vote_strength < self.min_vote_strength) or (agreement_weight < self.min_agreement)
+        ultra_short_low_agreement = is_ultra_short and (agreement_weight < self.ultra_short_min_agreement)
+        is_uncertain = (
+            (vote_strength < self.min_vote_strength)
+            or (agreement_weight < self.min_agreement)
+            or ultra_short_low_agreement
+        )
 
         uncertainty_reason = None
         if is_uncertain:
-            if vote_strength < self.min_vote_strength and agreement_weight < self.min_agreement:
+            if ultra_short_low_agreement:
+                uncertainty_reason = "ultra_short_low_agreement"
+            elif vote_strength < self.min_vote_strength and agreement_weight < self.min_agreement:
                 uncertainty_reason = "low_vote_strength_and_low_agreement"
             elif vote_strength < self.min_vote_strength:
                 uncertainty_reason = "low_vote_strength"
@@ -321,6 +349,8 @@ class ModelManager:
             "best_model_score":     best_overall["margin"],
             "language_detected":    lang,
             "used_real_image":      True,
+            "text_word_count":      word_count,
+            "used_short_profile":   is_short_text,
             "vote_strength":        vote_strength,
             "agreement":            agreement_weight,
             "is_uncertain":         is_uncertain,
@@ -329,7 +359,6 @@ class ModelManager:
             "avg_fake":             avg_fake,
             "all_scores":           all_results,
         }
-    
 
     # Batch benchmark
     # It will be important to run `fit_label_order_from_benchmark` on any new batch of cases before interpreting these results, 
@@ -365,7 +394,7 @@ class ModelManager:
     # Label-order auto-fit
     def fit_label_order_from_benchmark(self, cases, min_cases=3, min_improvement=0.15, auto_apply=True):
         # Detect likely label-order inversion per expert using expected labels.
-        # Must be called MANUALLY with real image+text cases — never at module load time.
+        # Requires real image+text cases with known ground truth labels.
         
         labeled_cases = [c for c in cases if c.get("expected") in ("Real", "Fake")]
         if len(labeled_cases) < min_cases:
@@ -404,13 +433,15 @@ class ModelManager:
                 "applied_order":          self.label_order_map[model_label],
             }
         return report
-    
+
     # Lets automatically compute reliability weights from benchmark results, based on accuracy on labeled cases. 
     # This can be used to update `self.expert_reliability` after running a benchmark with known labels, to better weight the experts in future predictions.
-    def compute_reliability_from_benchmark(self, cases):
+    def compute_reliability_from_benchmark(self, cases, target_map="global"):
         labeled = [c for c in cases if c.get("expected") in ("Real", "Fake")]
         if len(labeled) < 10:
             raise ValueError("Need at least 10 labeled cases to compute reliability.")
+        if target_map not in ("global", "short"):
+            raise ValueError("target_map must be 'global' or 'short'.")
 
         prepared = [{
             "text":     c["text"],
@@ -418,7 +449,8 @@ class ModelManager:
             "img":      self._resolve_input_image(c.get("image_path")),
         } for c in labeled]
 
-        print(f"\n{'Model':<25} {'Accuracy':>9} {'New Weight':>11}")
+        title = "New Weight (short)" if target_map == "short" else "New Weight"
+        print(f"\n{'Model':<25} {'Accuracy':>9} {title:>17}")
         print("-" * 48)
 
         for model_label, expert in self._all_experts_flat().items():
@@ -433,8 +465,30 @@ class ModelManager:
 
             accuracy   = correct / len(prepared)
             new_weight = max(0.0, (accuracy - 0.5) * 2)
-            self.expert_reliability[model_label] = new_weight
-            print(f"  {model_label:<23} {accuracy:>8.0%} {new_weight:>10.2f}")
+            if target_map == "short":
+                self.expert_reliability_short[model_label] = new_weight
+            else:
+                self.expert_reliability[model_label] = new_weight
+            print(f"  {model_label:<23} {accuracy:>8.0%} {new_weight:>16.2f}")
+
+    def compute_short_text_reliability_from_benchmark(self, cases, max_words=None, min_cases=10):
+        max_words = self.short_text_max_words if max_words is None else int(max_words)
+        short_labeled = [
+            c for c in cases
+            if c.get("expected") in ("Real", "Fake")
+            and len(str(c.get("text", "")).split()) < max_words
+        ]
+        if len(short_labeled) < min_cases:
+            raise ValueError(
+                f"Need at least {min_cases} short labeled cases (<{max_words} words). "
+                f"Found {len(short_labeled)}."
+            )
+        self.compute_reliability_from_benchmark(short_labeled, target_map="short")
+        return {
+            "target_map": "short",
+            "max_words": max_words,
+            "num_cases": len(short_labeled),
+        }
 
     # Diagnose
     # This will print detailed per-expert outputs for a single input, before any label-order correction or weighting, to help with error analysis and sanity checks. 

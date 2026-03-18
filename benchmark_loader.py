@@ -223,6 +223,15 @@ def main():
                       f"{stats['normal_acc']:>6.0%}   {stats['flipped_acc']:>7.0%}{flag}")
             print("\nComputing reliability weights from calibration cases...")
             manager.compute_reliability_from_benchmark(calib_cases)
+            print("Computing short-text reliability weights from calibration cases...")
+            try:
+                manager.compute_short_text_reliability_from_benchmark(
+                    calib_cases,
+                    max_words=manager.short_text_max_words,
+                    min_cases=10,
+                )
+            except ValueError as e:
+                print(f"Skipping short-text reliability calibration: {e}")
         else:
             print("Not enough labeled cases for calibration, skipping.")
 

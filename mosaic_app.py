@@ -419,6 +419,15 @@ col_in, col_res = st.columns([1, 1], gap="large")
 with col_in:
     st.markdown('<div class="card-title">INPUT</div>', unsafe_allow_html=True)
 
+    st.markdown("""
+        <div style="font-family:'Space Mono',monospace;font-size:0.60rem;color:#9c9cb5;
+                    letter-spacing:0.10em;line-height:1.8;margin-bottom:1rem;
+                    border-left:2px solid #2a2a4a;padding-left:0.75rem;">
+            BEST RESULTS: Real news headlines or social media posts with their original image.<br>
+            Designed for structured misinformation — not short phrases or mismatched images.
+        </div>
+        """, unsafe_allow_html=True)
+
     # st.text_area renders a multi-line text box.
     # label_visibility="collapsed" hides the label visually (we use card-title instead).
     # The return value is whatever string the user has typed — updates live on every keypress.

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOSAIC — Fake News Detector</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+
+        /* Overall theme + backgrounds */
+        body {
+            font-family: 'Syne', sans-serif;
+            background-color: #03040e;
+            color: #ffffff;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background-image: linear-gradient(rgba(60, 120, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(60, 120, 255, 0.07) 1px, transparent 1px);
+            background-size: 44px 44px; z-index: -2; pointer-events: none;
+        }
+
+        body::after {
+            content: ''; position: fixed; top: -15%; left: 50%; transform: translateX(-50%);
+            width: 1000px; height: 600px;
+            background: radial-gradient(ellipse at center, rgba(60, 80, 255, 0.25) 0%, rgba(80, 40, 200, 0.12) 40%, transparent 68%);
+            z-index: -1; pointer-events: none; filter: blur(70px);
+        }
+
+        .block-container { padding: 2rem 3rem 4rem 3rem; max-width: 1200px; margin: 0 auto; }
+        .columns { display: flex; gap: 3rem; margin-top: 1rem; }
+        .column { flex: 1; display: flex; flex-direction: column; gap: 1rem; }
+
+        /* Header style */
+        .mosaic-header { text-align: center; padding: 2.5rem 0 1.5rem 0; position: relative; }
+        .mosaic-header::before {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -55%);
+            width: 380px; height: 380px; border-radius: 50%;
+            background-image: conic-gradient(from 0deg, transparent 0%, rgba(120, 180, 255, 0.8) 18%, rgba(160, 100, 255, 0.5) 38%, transparent 58%, rgba(80, 140, 255, 0.4) 78%, transparent 100%);
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), white calc(100% - 2px));
+            animation: spin-ring 8s linear infinite; z-index: -1; pointer-events: none;
+        }
+        @keyframes spin-ring {
+            from { transform: translate(-50%, -55%) rotate(0deg); }
+            to   { transform: translate(-50%, -55%) rotate(360deg); }
+        }
+
+        .mosaic-title { font-weight: 800; font-size: 4.2rem; letter-spacing: 0.55em; margin: 0; text-shadow: 0 0 40px rgba(120, 180, 255, 0.7), 0 0 80px rgba(80, 100, 255, 0.4); }
+        .mosaic-subtitle { font-family: 'Space Mono', monospace; font-size: 0.65rem; letter-spacing: 0.3em; opacity: 0.6; text-transform: uppercase; margin-top: 0.6rem; }
+        .mosaic-divider { width: 120px; height: 1px; background: linear-gradient(90deg, transparent, rgba(120, 180, 255, 0.6), transparent); margin: 1.8rem auto; }
+
+        /* Titles and the banner */
+        .load-banner {
+            font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.2em;
+            color: #00f096; border-color: rgba(0,240,150,0.45); background: rgba(0,50,25,0.45);
+            border-radius: 10px; padding: 0.7rem 1.2rem; text-align: center; margin-bottom: 1.5rem; border: 1px solid rgba(0,240,150,0.45);
+            backdrop-filter: blur(16px); box-shadow: 0 4px 24px rgba(60, 100, 255, 0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+        .card-title { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase; margin-bottom: 1.25rem; border-left: 2px solid rgba(100, 160, 255, 0.8); padding-left: 0.75rem; }
+        .hint-text { font-family: 'Space Mono', monospace; font-size: 0.58rem; color: rgba(255,255,255,0.55); letter-spacing: 0.1em; line-height: 1.9; border-left: 2px solid rgba(80,140,255,0.5); padding-left: 0.75rem; margin-bottom: 1rem; }
+
+        /* Handles inputs and other buttons */
+        .input-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.85; margin-bottom: 0.5rem; display: block; }
+        .st-input {
+            width: 100%; background: rgba(10, 16, 50, 0.55); border: 1px solid rgba(80, 140, 255, 0.35); border-radius: 10px;
+            color: #ffffff; padding: 0.75rem; font-family: 'Syne', sans-serif; font-size: 0.92rem; box-sizing: border-box; margin-bottom: 1rem;
+            backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05); transition: 0.2s;
+        }
+        .st-input::placeholder { color: rgba(255,255,255,0.25); }
+        .st-input:focus { outline: none; border-color: rgba(100, 160, 255, 0.7); box-shadow: 0 0 0 2px rgba(80, 140, 255, 0.2), 0 4px 20px rgba(0,0,0,0.3); }
+
+        .action-btn { background: rgba(30, 60, 160, 0.6); border: 1px solid rgba(80, 140, 255, 0.5); border-radius: 8px; color: #ffffff; padding: 0 1rem; cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.68rem; transition: 0.15s; }
+        .action-btn:hover { border-color: rgba(120, 180, 255, 0.7); box-shadow: 0 6px 30px rgba(60, 120, 255, 0.2); }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #2a5fff 0%, #1a35cc 100%); border: 1px solid rgba(120, 180, 255, 0.5);
+            color: #ffffff; font-weight: 700; font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+            border-radius: 10px; padding: 0.8rem 1.8rem; width: 100%; cursor: pointer; transition: all 0.2s ease; margin-top: 1rem;
+            box-shadow: 0 4px 28px rgba(40, 90, 255, 0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .analyze-btn:hover { background: linear-gradient(135deg, #4a7fff 0%, #2a4fee 100%); box-shadow: 0 6px 40px rgba(60, 120, 255, 0.6), inset 0 1px 0 rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+        /* The box for the verdict */
+        .verdict-container { text-align: center; padding: 2.2rem 2rem; border-radius: 16px; margin-bottom: 1.5rem; backdrop-filter: blur(20px); }
+        .verdict-real { background: rgba(0, 180, 100, 0.1); border: 1px solid rgba(0, 230, 150, 0.5); box-shadow: 0 0 40px rgba(0, 220, 140, 0.12), 0 8px 32px rgba(0,0,0,0.4); }
+        .verdict-fake { background: rgba(220, 40, 40, 0.1); border: 1px solid rgba(255, 90, 90, 0.5); box-shadow: 0 0 40px rgba(255, 80, 80, 0.12), 0 8px 32px rgba(0,0,0,0.4); }
+        .verdict-uncertain { background: rgba(200, 150, 0, 0.1); border: 1px solid rgba(240, 200, 0, 0.5); box-shadow: 0 0 40px rgba(240, 200, 0, 0.12), 0 8px 32px rgba(0,0,0,0.4); }
+        .verdict-text { font-size: 3.2rem; font-weight: 800; line-height: 1; letter-spacing: 0.06em; }
+        .v-real { color: #00f096; text-shadow: 0 0 30px rgba(0, 240, 150, 0.6); }
+        .v-fake { color: #ff4f4f; text-shadow: 0 0 30px rgba(255, 79, 79, 0.6); }
+        .v-unc  { color: #ffcc00; text-shadow: 0 0 30px rgba(255, 204, 0, 0.6); }
+
+        .conf-bar-bg { background: rgba(255,255,255,0.08); border-radius: 4px; height: 5px; margin: 0.5rem auto; overflow: hidden; max-width: 240px; }
+        .conf-bar-real { height: 100%; border-radius: 4px; background: linear-gradient(90deg,#006b40,#00f096); box-shadow: 0 0 12px rgba(0,240,150,0.7); transition: width 1s ease-in-out;}
+        .conf-bar-fake { height: 100%; border-radius: 4px; background: linear-gradient(90deg,#6b0000,#ff4f4f); box-shadow: 0 0 12px rgba(255,79,79,0.7); transition: width 1s ease-in-out;}
+        .conf-bar-unc  { height: 100%; border-radius: 4px; background: linear-gradient(90deg,#6b5000,#ffcc00); box-shadow: 0 0 12px rgba(255,204,0,0.7); transition: width 1s ease-in-out;}
+
+        /* For the metrics and XAI */
+        .metric-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1.2rem; margin-bottom: 1.5rem;}
+        .metric-pill { background: rgba(15, 25, 70, 0.6); border: 1px solid rgba(80, 140, 255, 0.3); border-radius: 10px; padding: 0.65rem 0.9rem; flex: 1; text-align: center; backdrop-filter: blur(12px); box-shadow: 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06); transition: 0.2s; }
+        .metric-pill:hover { border-color: rgba(120, 180, 255, 0.55); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(60, 120, 255, 0.2); }
+        .mp-label { font-family: 'Space Mono', monospace; font-size: 0.52rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.5); display: block; }
+        .mp-value { font-size: 1.05rem; font-weight: 700; color: #ffffff; display: block; margin-top: 0.2rem; }
+
+        .xai-box { background: rgba(15, 25, 70, 0.55); border: 1px solid rgba(80, 140, 255, 0.28); border-radius: 12px; padding: 1rem 1.15rem; margin-top: 0.85rem; margin-bottom: 1.5rem; backdrop-filter: blur(16px); box-shadow: 0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05); }
+        .xai-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; color: rgba(255,255,255,0.5); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .xai-body  { font-family: 'Syne', sans-serif; font-size: 0.85rem; color: #ffffff; line-height: 1.75; }
+        .xai-footer { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(255,255,255,0.55); margin-top: 0.6rem; border-top: 1px solid rgba(80,140,255,0.18); padding-top: 0.55rem; }
+
+        /* The expert row and expanding it */
+        details { margin-top: 0.5rem; }
+        summary { cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.7rem; color: #9c9cb5; outline: none; list-style: none; padding: 0.5rem 0; user-select: none; display: flex; justify-content: space-between; align-items: center;}
+        summary::-webkit-details-marker { display: none; }
+        summary:hover { color: #fafafa; }
+        
+        .expert-row { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.9rem; background: rgba(12, 20, 60, 0.55); border: 1px solid rgba(60, 100, 220, 0.22); border-radius: 8px; margin-bottom: 0.35rem; gap: 1rem; backdrop-filter: blur(8px); box-shadow: 0 2px 12px rgba(0,0,0,0.25); transition: 0.15s; }
+        .expert-row:hover { border-color: rgba(100, 160, 255, 0.45); background: rgba(18, 32, 88, 0.7); transform: translateX(3px); }
+        .expert-name { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: rgba(255,255,255,0.85); min-width: 140px; }
+        
+        /* awaiting box */
+        .awaiting-box { height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed rgba(80, 140, 255, 0.35); border-radius: 16px; background: rgba(10, 18, 55, 0.45); backdrop-filter: blur(16px); box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); gap: 0.75rem; }
+        .hidden { display: none !important; }
+
+        /* Footer styling */
+        .site-footer { text-align: center; margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid rgba(60,100,220,0.18); font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 0.18em; color: rgba(255,255,255,0.35); }
+    </style>
+</head>
+<body>
+
+<div class="block-container">
+    <div class="mosaic-header">
+        <div class="mosaic-title">MOSAIC</div>
+        <div class="mosaic-subtitle">Multimodal Online Source Authenticity &amp; Integrity Checker</div>
+    </div>
+    <div class="mosaic-divider"></div>
+
+    <div class="load-banner">⬡ &nbsp; EXPERT MODELS READY</div>
+
+    <div class="columns">
+        
+        <div class="column">
+            <div class="card-title">INPUT</div>
+            
+            <div class="hint-text">
+                BEST RESULTS: Real news headlines or social media posts with their original image.<br>
+                Designed for structured misinformation — not short phrases or mismatched images.
+            </div>
+
+            <label class="input-label">Post Content</label>
+            <textarea id="postText" class="st-input" rows="5" placeholder="Paste the text or headline here..."></textarea>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <label class="input-label">Upload Image (required)</label>
+                    <input type="file" id="imageUpload" class="st-input" accept="image/png, image/jpeg, image/webp" style="margin-bottom: 0;">
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <label class="input-label">Or Scrape URL</label>
+                    <div style="display: flex; gap: 0.5rem; height: 100%;">
+                        <input type="text" id="urlInput" class="st-input" placeholder="Enter URL..." style="margin-bottom: 0;">
+                        <button id="scrapeBtn" class="action-btn">SCRAPE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="imagePreviewContainer" class="hidden" style="margin-bottom: 1rem;">
+                <label class="input-label">Image Preview</label>
+                <img id="imagePreview" style="width: 100%; border-radius: 8px; border: 1px solid rgba(80, 140, 255, 0.35); object-fit: cover; max-height: 300px;">
+                <div id="scrapeSource" class="hidden" style="font-family:Space Mono;font-size:0.55rem;color:rgba(255,255,255,0.45);letter-spacing:0.12em;margin-top:0.3rem;">⬡ SOURCE: </div>
+            </div>
+
+            <button id="submitBtn" class="analyze-btn">RUN ANALYSIS</button>
+        </div>
+
+        <div class="column">
+            <div id="awaitingInput" class="awaiting-box">
+                <div style="font-size:2rem;opacity:0.18;color:#6090ff;">⬡</div>
+                <div style="font-family:Space Mono;font-size:0.7rem;letter-spacing:0.25em;color:rgba(255,255,255,0.7);font-weight:700;">AWAITING INPUT</div>
+                <div style="font-family:Space Mono;font-size:0.55rem;letter-spacing:0.14em;color:rgba(255,255,255,0.3);">ENTER TEXT AND IMAGE TO BEGIN ANALYSIS</div>
+            </div>
+
+            <div id="resultSection" class="hidden">
+                <div class="card-title">ANALYSIS RESULT</div>
+                <div id="verdictBox"></div>
+                <div id="metricsBox" class="metric-row"></div>
+                <div id="xaiBox"></div>
+                <details>
+                    <summary>PER-EXPERT BREAKDOWN <span style="font-size: 0.8rem;">▼</span></summary>
+                    <div id="expertTable" style="margin-top: 0.5rem;"></div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <div class="site-footer">
+        MOSAIC &nbsp;—&nbsp; AI-POWERED MULTIMODAL FAKE NEWS DETECTION &nbsp;|&nbsp; EXPERT ENSEMBLE &nbsp;|&nbsp; WEIGHTED VOTING
+    </div>
+</div>
+
+<script>
+    let scrapedBase64Data = null;
+
+    function base64ToBlob(b64) {
+        const bytes = atob(b64);
+        const arr = new Uint8Array(bytes.length);
+        for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+        return new Blob([arr], { type: 'image/jpeg' });
+    }
+
+    document.getElementById('imageUpload').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            scrapedBase64Data = null;
+            document.getElementById('scrapeSource').classList.add('hidden');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('imagePreviewContainer').classList.remove('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    const scrapeBtn = document.getElementById('scrapeBtn');
+    scrapeBtn.addEventListener('click', async () => {
+        const url = document.getElementById('urlInput').value;
+        if (!url) return alert("Please enter a URL to scrape.");
+        
+        scrapeBtn.innerText = "...";
+        try {
+            const response = await fetch("http://localhost:5000/scrape", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: url })
+            });
+            const data = await response.json();
+            
+            document.getElementById('postText').value = data.text;
+            scrapedBase64Data = data.image;
+            document.getElementById('imagePreview').src = "data:image/jpeg;base64," + data.image;
+            document.getElementById('imagePreviewContainer').classList.remove('hidden');
+            
+            let domain = new URL(url).hostname;
+            let srcEl = document.getElementById('scrapeSource');
+            srcEl.innerText = "⬡ SOURCE: " + domain;
+            srcEl.classList.remove('hidden');
+
+            scrapeBtn.innerText = "SCRAPE";
+        } catch (err) {
+            alert("Scraping failed. Is the backend running?");
+            console.error(err);
+            scrapeBtn.innerText = "SCRAPE";
+        }
+    });
+
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.addEventListener('click', async () => {
+        const text = document.getElementById('postText').value;
+        const fileInput = document.getElementById('imageUpload').files[0];
+
+        const formData = new FormData();
+        formData.append("text", text);
+        
+        if (fileInput) {
+            formData.append('image', fileInput);
+        } else if (scrapedBase64Data) {
+            formData.append('image', base64ToBlob(scrapedBase64Data), 'scraped.jpg');
+        } else {
+            return alert("Please upload an image or scrape a URL.");
+        }
+
+        try {
+            submitBtn.innerText = "ANALYZING...";
+            submitBtn.style.opacity = "0.5";
+            
+            const response = await fetch("http://localhost:5000/predict", { method: "POST", body: formData });
+            const data = await response.json();
+            
+            renderResults(data);
+            
+            submitBtn.innerText = "RUN ANALYSIS";
+            submitBtn.style.opacity = "1";
+        } catch(err) {
+            alert("Analysis failed. Is the backend running?");
+            console.error(err);
+            submitBtn.innerText = "RUN ANALYSIS";
+            submitBtn.style.opacity = "1";
+        }
+    });
+
+    function renderResults(data) {
+        document.getElementById('awaitingInput').classList.add('hidden');
+        document.getElementById('resultSection').classList.remove('hidden');
+
+        const v = data.final_verdict.replace(/^[a-z]/, char => char.toUpperCase()); // Capitalize first letter
+        const vUpper = v.toUpperCase();
+        let vClass = v === "Real" ? "verdict-real" : (v === "Fake" ? "verdict-fake" : "verdict-uncertain");
+        let tClass = v === "Real" ? "v-real" : (v === "Fake" ? "v-fake" : "v-unc");
+        let bClass = v === "Real" ? "conf-bar-real" : (v === "Fake" ? "conf-bar-fake" : "conf-bar-unc");
+        let confPercent = (data.overall_confidence * 100).toFixed(1);
+
+        document.getElementById('verdictBox').innerHTML = `
+            <div class="verdict-container ${vClass}">
+                <div style="font-family:Space Mono;font-size:0.55rem;color:rgba(255,255,255,0.5);margin-bottom:0.7rem;letter-spacing:0.3em;">VERDICT</div>
+                <div class="verdict-text ${tClass}">${vUpper}</div>
+                <div style="font-family:Space Mono;font-size:0.58rem;color:rgba(255,255,255,0.55);margin-top:1.1rem;letter-spacing:0.15em;">CONFIDENCE &nbsp; ${Math.round(confPercent)}%</div>
+                <div class="conf-bar-bg"><div class="${bClass}" style="width:0%"></div></div>
+                ${v === "Uncertain" ? `<div style="font-family:Space Mono;font-size:0.58rem;color:#ffcc00;margin-top:0.7rem;letter-spacing:0.12em;">REASON: ${data.uncertainty_reason.replace(/_/g, " ").toUpperCase()}</div>` : ""}
+            </div>
+        `;
+        setTimeout(() => { document.querySelector(`.${bClass}`).style.width = `${confPercent}%`; }, 100);
+
+        document.getElementById('metricsBox').innerHTML = `
+            <div class="metric-pill"><span class="mp-label">Vote Strength</span><span class="mp-value">${data.vote_strength.toFixed(2)}</span></div>
+            <div class="metric-pill"><span class="mp-label">Agreement</span><span class="mp-value">${Math.round(data.agreement * 100)}%</span></div>
+            <div class="metric-pill"><span class="mp-label">Language</span><span class="mp-value">${data.language_detected.toUpperCase() === 'ZH' ? 'ZH' : 'EN'}</span></div>
+            <div class="metric-pill"><span class="mp-label">Image</span><span class="mp-value">${data.used_real_image ? 'YES' : 'NO'}</span></div>
+            <div style="width:100%;font-family:Space Mono;font-size:0.55rem;color:rgba(255,255,255,0.35);text-align:center;margin-top:0.9rem;letter-spacing:0.1em;">MOST CONFIDENT EXPERT: ${data.most_confident_model}</div>
+        `;
+
+        // XAI
+        if (v === "Uncertain") {
+            const reason = data.uncertainty_reason ? data.uncertainty_reason.replace(/_/g, " ") : "conflicting signals";
+            document.getElementById('xaiBox').innerHTML = `
+                <div class="xai-box">
+                    <div class="xai-label">WHY UNCERTAIN</div>
+                    <div class="xai-body">The ensemble could not reach a confident decision due to ${reason}. This input may fall outside the training distribution of the available models.</div>
+                </div>`;
+        } else {
+            // for finding the top 3 supporting models based on the logic of: (weight * score gap)
+            let supporters = data.all_scores
+                .filter(m => m.predicted_label === v && m.weight > 0)
+                .sort((a, b) => (b.weight * Math.abs(b.Fake - b.Real)) - (a.weight * Math.abs(a.Fake - a.Real)))
+                .slice(0, 3);
+            
+            if (supporters.length > 0) {
+                let modelNames = supporters.map(m => m.model).join(", ");
+                let datasetDescriptions = {
+                    "snopes": "English political fact-checking",
+                    "xfacta": "cross-domain news verification",
+                    "weibo": "Chinese social media",
+                    "mmhl": "medical and health misinformation"
+                };
+                
+                let datasetsMentioned = [];
+                supporters.forEach(m => {
+                    for (let key in datasetDescriptions) {
+                        if (m.model.toLowerCase().includes(key) && !datasetsMentioned.includes(datasetDescriptions[key])) {
+                            datasetsMentioned.push(datasetDescriptions[key]);
+                        }
+                    }
+                });
+                
+                let datasetStr = datasetsMentioned.length > 0 ? datasetsMentioned.join(" and ") : "multiple domains";
+                let totalActive = data.all_scores.filter(m => m.weight > 0).length;
+                let strongVoters = data.all_scores.filter(m => m.predicted_label === v && Math.abs(m.Fake - m.Real) > 0.4 && m.weight > 0.3).length;
+                let color = v === "Real" ? "#00f096" : "#ff4f4f";
+
+                document.getElementById('xaiBox').innerHTML = `
+                    <div class="xai-box">
+                        <div class="xai-label">WHY ${vUpper}</div>
+                        <div class="xai-body">
+                            Decision driven primarily by <span style="color:${color};font-weight:700;">${modelNames}</span>,
+                            trained on ${datasetStr} datasets. These models showed the strongest and most consistent signal
+                            toward a <span style="color:${color};font-weight:700;">${v}</span> verdict.
+                        </div>
+                        <div class="xai-footer">
+                            ${strongVoters} of ${totalActive} active models voted
+                            <span style="color:${color};font-weight:700;">${v}</span> with high confidence.
+                        </div>
+                    </div>`;
+            } else {
+                document.getElementById('xaiBox').innerHTML = ""; // Clears if there aren't any supporters found
+            }
+        }
+
+        let tableHtml = "";
+        data.all_scores.forEach(row => {
+            const color = row.predicted_label === "Real" ? "#00f096" : "#ff4f4f";
+            const opacity = row.weight > 0 ? Math.max(0.25, Math.min(1.0, row.weight * 2)) : 0.25; 
+            tableHtml += `
+            <div class="expert-row" style="opacity:${opacity.toFixed(2)}">
+                <span class="expert-name">${row.model}</span>
+                <span style="color:${color};font-family:Space Mono;font-size:0.68rem;font-weight:700;min-width:55px;">${row.predicted_label}</span>
+                <span style="font-family:Space Mono;font-size:0.58rem;color:rgba(255,255,255,0.5);">R=${row.Real.toFixed(2)} &nbsp; F=${row.Fake.toFixed(2)}</span>
+                <span style="font-family:Space Mono;font-size:0.58rem;color:rgba(255,255,255,0.35);margin-left:auto;">w=${row.weight.toFixed(2)}</span>
+            </div>`;
+        });
+        document.getElementById('expertTable').innerHTML = tableHtml;
+    }
+</script>
+</body>
+</html>

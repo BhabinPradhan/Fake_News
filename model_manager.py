@@ -112,21 +112,21 @@ class ModelManager:
             # MCAN
             "MCAN (snopes)":      0.67,
             "MCAN (xfacta)":      0.20,
-            "MCAN (weibo)":       0.00,
+            "MCAN (weibo)":       0.20,
             "MCAN (mmhl)":        0.00,
             # SpotFake
             "SpotFake (xfacta)":  0.33,
-            "SpotFake (weibo)":   0.00,
+            "SpotFake (weibo)":   0.13,
             "SpotFake (mmhl)":    0.07,
             "SpotFake (snopes)":  0.00,
             # MVAE
             "MVAE (xfacta)":      0.60,
-            "MVAE (weibo)":       0.00,
+            "MVAE (weibo)":       0.13,
             "MVAE (mmhl)":        0.00,
             "MVAE (snopes)":      0.00,
             # ATTRNN
             "ATTRNN (xfacta)":    0.47,
-            "ATTRNN (weibo)":     0.00,
+            "ATTRNN (weibo)":     0.20,
             "ATTRNN (mmhl)":      0.00,
             "ATTRNN (snopes)":    0.00,
         }
@@ -145,7 +145,6 @@ class ModelManager:
             "MCAN (mmhl)":       "FR",
             "SpotFake (xfacta)": "FR",
             "MVAE (xfacta)":     "FR",
-            "MVAE (weibo)":      "FR",
             "ATTRNN (xfacta)":   "FR",
         }
         for label in self.expert_reliability.keys():
@@ -166,15 +165,6 @@ class ModelManager:
         return 'en'
 
     def _iter_experts(self, lang, text=""):
-        family_weight = {
-            "MoPeD":    1.00,
-            "COOLANT":  1.00,
-            "EMAF":     0.95,
-            "MCAN":     1.00,
-            "SpotFake": 1.00,
-            "MVAE":     1.00,
-            "ATTRNN":   1.00,
-        }
         word_count       = len(text.split())
         is_short_caption = word_count < self.short_text_max_words
         reliability_map  = self.expert_reliability_short if is_short_caption else self.expert_reliability
@@ -206,7 +196,6 @@ class ModelManager:
             for name, expert in experts.items():
                 label  = f"{family} ({name})"
                 weight = (
-                    family_weight[family] *
                     domain_weight.get(name, 1.0) *
                     reliability_map.get(label, self.expert_reliability.get(label, 1.0))
                 )

@@ -8,10 +8,10 @@ Falls back to newspaper3k if Playwright fails.
 Supports:
   - News articles (Playwright + newspaper3k fallback)
   - Reddit posts (no API key needed — uses Reddit's public .json endpoint)
+  - Twitter/X posts (via Nitter — open source Twitter frontend, no API key needed)
   - Facebook public posts (BeautifulSoup)
 
 Unsupported (API restrictions):
-  - Twitter/X (paid API only)
   - Instagram (Meta Graph API required)
   - TikTok (no text scraping support)
 
@@ -22,6 +22,7 @@ dependencies — safe to call directly from Flask or any other backend.
 import re
 import requests
 from io import BytesIO
+from urllib.parse import urlparse, unquote
 from PIL import Image
 from newspaper import Article
 
@@ -92,6 +93,24 @@ def _is_live_page(url):
     return any(p in url.lower() for p in live_patterns)
 
 
+def _playwright_browser(p):
+    """Creates a Playwright browser with anti-detection settings."""
+    browser = p.chromium.launch(
+        headless=True,
+        args=[
+            '--disable-blink-features=AutomationControlled',
+            '--no-sandbox',
+            '--disable-http2',
+        ]
+    )
+    context = browser.new_context(
+        user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                   '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        extra_http_headers={'Accept-Language': 'en-US,en;q=0.9'}
+    )
+    return browser, context
+
+
 # ── Platform detection ────────────────────────────────────────────────────────
 
 def _detect_platform(url):
@@ -110,6 +129,19 @@ def _detect_platform(url):
     return "article"
 
 
+def _twitter_to_nitter(url):
+    """
+    Converts a Twitter/X URL to a Nitter URL.
+    Also strips /photo/N suffixes since Nitter shows all photos on the main post page.
+    e.g. https://x.com/user/status/123/photo/1 → https://nitter.poast.org/user/status/123
+    """
+    # Strip /photo/N or /video/N suffixes
+    url = re.sub(r'/(photo|video)/\d+$', '', url.rstrip('/'))
+    # Replace domain
+    url = re.sub(r'https?://(www\.)?(twitter\.com|x\.com)', 'https://nitter.poast.org', url)
+    return url
+
+
 # ── Playwright scraper ────────────────────────────────────────────────────────
 
 def _scrape_with_playwright(url):
@@ -122,19 +154,7 @@ def _scrape_with_playwright(url):
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=[
-                "--disable-http2",
-                "--disable-blink-features=AutomationControlled",
-                "--no-sandbox",
-            ]
-        )
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                       "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            extra_http_headers={"Accept-Language": "en-US,en;q=0.9"}
-        )
+        browser, context = _playwright_browser(p)
         page = context.new_page()
 
         # Block unnecessary resources to speed up loading
@@ -237,18 +257,93 @@ def _scrape_article(url):
     return {"text": full_text, "image": image, "warning": warning}
 
 
+# ── Twitter scraper ───────────────────────────────────────────────────────────
+
+# Nitter instance to use — change this if the instance goes down
+_NITTER_INSTANCE = "nitter.poast.org"
+
+def _scrape_twitter(url):
+    """
+    Scrapes a Twitter/X post via Nitter (open source Twitter frontend).
+    No API key required. Converts the Twitter URL to a Nitter URL and uses
+    Playwright to get past Nitter's browser verification challenge.
+
+    Extracts:
+      - Tweet text
+      - First attached media image (if any)
+
+    Falls back to a warning if no image is found (text-only tweets).
+    """
+    from playwright.sync_api import sync_playwright
+
+    nitter_url = _twitter_to_nitter(url)
+    print(f"[scraper] Twitter → Nitter: {nitter_url}")
+
+    with sync_playwright() as p:
+        browser, context = _playwright_browser(p)
+        page = context.new_page()
+
+        page.goto(nitter_url, wait_until="networkidle", timeout=30000)
+        page.wait_for_timeout(5000)  # wait for JS verification to complete
+
+        # Extract tweet text from the main post container
+        try:
+            tweet_text = page.inner_text('.main-tweet .tweet-content')
+        except Exception:
+            # Fallback: grab all text and clean it
+            tweet_text = page.inner_text('body')
+
+        # Extract media images (actual tweet photos, not profile pics)
+        media_images = page.eval_on_selector_all(
+            'img',
+            'imgs => imgs.map(i => i.src).filter(s => s.includes("media"))'
+        )
+
+        browser.close()
+
+    # Clean the tweet text
+    tweet_text = tweet_text.strip()
+    if not tweet_text:
+        raise RuntimeError("Could not extract text from this tweet.")
+
+    # Get the first media image
+    image_url = media_images[0] if media_images else None
+
+    # Nitter proxies images through its own domain — convert to direct Twitter URL
+    # e.g. https://nitter.poast.org/pic/media%2FHEv1mTsaUAAq-Fs.jpg
+    # → https://pbs.twimg.com/media/HEv1mTsaUAAq-Fs.jpg
+    if image_url and _NITTER_INSTANCE in image_url:
+        try:
+            # Extract the path after /pic/
+            pic_path = image_url.split('/pic/')[1]
+            # Decode URL encoding
+            pic_path = unquote(pic_path)
+            # Strip query params like ?name=small&format=webp
+            pic_path = pic_path.split('?')[0]
+            # Build direct Twitter image URL
+            image_url = f"https://pbs.twimg.com/{pic_path}"
+        except Exception:
+            pass
+
+    image    = _fetch_image(image_url)
+    is_blank = image_url is None or (
+        image.size == (224, 224) and image.getpixel((0, 0)) == (255, 255, 255)
+    )
+    warning = (
+        "⚠ No image found in this tweet. "
+        "Results may be less reliable — consider uploading an image manually."
+    ) if is_blank else None
+
+    return {"text": tweet_text, "image": image, "warning": warning}
+
+
 # ── Reddit scraper ────────────────────────────────────────────────────────────
 
 def _scrape_reddit(url):
     """
     Scrapes a Reddit post using Reddit's public .json endpoint.
     No API key required — Reddit exposes post data by appending .json to any post URL.
-
-    Extracts:
-      - title + selftext (body) for text posts
-      - title + image URL for image/link posts
     """
-    # Normalise URL: strip trailing slash then append .json
     json_url = url.rstrip('/') + '.json'
     headers  = {"User-Agent": "MOSAIC/1.0"}
 
@@ -260,7 +355,6 @@ def _scrape_reddit(url):
     except Exception as e:
         raise RuntimeError(f"Failed to fetch Reddit post: {e}")
 
-    # Build text from title + body
     title    = post.get('title', '').strip()
     selftext = post.get('selftext', '').strip()
     full_text = f"{title}\n\n{selftext}".strip() if selftext else title
@@ -268,7 +362,6 @@ def _scrape_reddit(url):
     if not full_text:
         raise RuntimeError("Reddit post has no text content.")
 
-    # Try to get image from post URL or preview
     image     = _blank_image()
     post_url  = post.get('url', '')
     image_url = None
@@ -277,24 +370,22 @@ def _scrape_reddit(url):
         image_url = post_url
     elif post.get('preview'):
         try:
-            # Reddit encodes & as &amp; in preview URLs
             image_url = post['preview']['images'][0]['source']['url'].replace('&amp;', '&')
         except (KeyError, IndexError):
             pass
 
-    if image_url:
-        image = _fetch_image(image_url)
-    elif post_url and not any(post_url.lower().endswith(ext) for ext in ('.jpg', '.jpeg', '.png', '.webp', '.gif')):
-        # Link post — try to grab the lead image from the linked article
+    if not image_url and post_url and not any(post_url.lower().endswith(ext) for ext in ('.jpg', '.jpeg', '.png', '.webp', '.gif')):
         try:
             article = Article(post_url)
             article.download()
             article.parse()
             if article.top_image:
-                image = _fetch_image(article.top_image)
                 image_url = article.top_image
         except Exception:
             pass
+
+    if image_url:
+        image = _fetch_image(image_url)
 
     is_blank = image_url is None or (
         image.size == (224, 224) and image.getpixel((0, 0)) == (255, 255, 255)
@@ -306,81 +397,13 @@ def _scrape_reddit(url):
 
     return {"text": full_text, "image": image, "warning": warning}
 
-
-# ── Facebook scraper (Does not work since it needs credentials) ──────────────────────────────────────────────────────────
-
-def _scrape_facebook(url):
-    """
-    Scrapes a public Facebook post using BeautifulSoup.
-    Only works for public posts — private posts and login-gated content
-    will fail gracefully with an error message.
-
-    Extracts post text from Open Graph meta tags and the lead image.
-    """
-    try:
-        from bs4 import BeautifulSoup
-    except ImportError:
-        raise RuntimeError("beautifulsoup4 is not installed. Run: pip install beautifulsoup4")
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-
-    try:
-        resp = requests.get(url, headers=headers, timeout=10)
-        resp.raise_for_status()
-    except Exception as e:
-        raise RuntimeError(
-            f"Could not load Facebook page: {e}. "
-            "This may be a private post — please paste the text manually."
-        )
-
-    soup = BeautifulSoup(resp.text, 'html.parser')
-
-    # Try og:description for post text (most reliable for public posts)
-    text = None
-    og_desc = soup.find('meta', property='og:description')
-    if og_desc and og_desc.get('content'):
-        text = og_desc['content'].strip()
-
-    # Fallback: og:title
-    if not text:
-        og_title = soup.find('meta', property='og:title')
-        if og_title and og_title.get('content'):
-            text = og_title['content'].strip()
-
-    if not text:
-        raise RuntimeError(
-            "Could not extract text from this Facebook post. "
-            "It may be private or login-gated — please paste the text manually."
-        )
-
-    # Get lead image from og:image
-    image_url = None
-    og_image  = soup.find('meta', property='og:image')
-    if og_image and og_image.get('content'):
-        image_url = og_image['content']
-
-    image    = _fetch_image(image_url)
-    is_blank = image_url is None or (
-        image.size == (224, 224) and image.getpixel((0, 0)) == (255, 255, 255)
-    )
-    warning = (
-        "⚠ No image found in this Facebook post. "
-        "Results may be less reliable — consider uploading an image manually."
-    ) if is_blank else None
-
-    return {"text": text, "image": image, "warning": warning}
-
-
 # ── Unsupported platforms ─────────────────────────────────────────────────────
 
 def _unsupported_platform(platform):
     messages = {
-        "twitter":   "Twitter/X requires a paid API. Please copy and paste the tweet text manually.",
         "instagram": "Instagram cannot be scraped. Please copy and paste the post text manually.",
         "tiktok":    "TikTok does not support text scraping. Please copy and paste any caption manually.",
+        "facebook":  "Facebook requires a paid API. Please copy and paste the post text manually.",
     }
     raise RuntimeError(messages.get(platform, f"Unsupported platform: {platform}"))
 
@@ -405,6 +428,8 @@ def get_scraped_data(url: str) -> dict:
         return _scrape_article(url)
     elif platform == "reddit":
         return _scrape_reddit(url)
+    elif platform == "twitter":
+        return _scrape_twitter(url)
     elif platform == "facebook":
         return _scrape_facebook(url)
     else:

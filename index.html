@@ -7,7 +7,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
 
-        /* Overall theme + backgrounds */
         body {
             font-family: 'Syne', sans-serif;
             background-color: #03040e;
@@ -15,121 +14,796 @@
             margin: 0;
             overflow-x: hidden;
         }
-        
+
         body::before {
-            content: ''; position: fixed; inset: 0;
+            content: '';
+            position: fixed;
+            inset: 0;
             background-image: linear-gradient(rgba(60, 120, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(60, 120, 255, 0.07) 1px, transparent 1px);
-            background-size: 44px 44px; z-index: -2; pointer-events: none;
+            background-size: 44px 44px;
+            z-index: -2;
+            pointer-events: none;
         }
 
         body::after {
-            content: ''; position: fixed; top: -15%; left: 50%; transform: translateX(-50%);
-            width: 1000px; height: 600px;
+            content: '';
+            position: fixed;
+            top: -15%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1000px;
+            height: 600px;
             background: radial-gradient(ellipse at center, rgba(60, 80, 255, 0.25) 0%, rgba(80, 40, 200, 0.12) 40%, transparent 68%);
-            z-index: -1; pointer-events: none; filter: blur(70px);
+            z-index: -1;
+            pointer-events: none;
+            filter: blur(70px);
         }
 
-        .block-container { padding: 2rem 3rem 4rem 3rem; max-width: 1200px; margin: 0 auto; }
-        .columns { display: flex; gap: 3rem; margin-top: 1rem; }
-        .column { flex: 1; display: flex; flex-direction: column; gap: 1rem; }
+        .block-container {
+            padding: 2.25rem 3.25rem 4.5rem 3.25rem;
+            max-width: 1320px;
+            margin: 0 auto;
+        }
 
-        /* Header style */
-        .mosaic-header { text-align: center; padding: 2.5rem 0 1.5rem 0; position: relative; }
+        .columns {
+            display: flex;
+            gap: 3.25rem;
+            margin-top: 1.25rem;
+            align-items: flex-start;
+        }
+
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .mosaic-header {
+            text-align: center;
+            padding: 2.5rem 0 1.5rem 0;
+            position: relative;
+        }
+
         .mosaic-header::before {
-            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -55%);
-            width: 380px; height: 380px; border-radius: 50%;
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -55%);
+            width: 380px;
+            height: 380px;
+            border-radius: 50%;
             background-image: conic-gradient(from 0deg, transparent 0%, rgba(120, 180, 255, 0.8) 18%, rgba(160, 100, 255, 0.5) 38%, transparent 58%, rgba(80, 140, 255, 0.4) 78%, transparent 100%);
             -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), white calc(100% - 2px));
-            animation: spin-ring 8s linear infinite; z-index: -1; pointer-events: none;
+            animation: spin-ring 8s linear infinite;
+            z-index: -1;
+            pointer-events: none;
         }
+
         @keyframes spin-ring {
             from { transform: translate(-50%, -55%) rotate(0deg); }
             to   { transform: translate(-50%, -55%) rotate(360deg); }
         }
 
-        .mosaic-title { font-weight: 800; font-size: 4.2rem; letter-spacing: 0.55em; margin: 0; text-shadow: 0 0 40px rgba(120, 180, 255, 0.7), 0 0 80px rgba(80, 100, 255, 0.4); }
-        .mosaic-subtitle { font-family: 'Space Mono', monospace; font-size: 0.65rem; letter-spacing: 0.3em; opacity: 0.6; text-transform: uppercase; margin-top: 0.6rem; }
-        .mosaic-divider { width: 120px; height: 1px; background: linear-gradient(90deg, transparent, rgba(120, 180, 255, 0.6), transparent); margin: 1.8rem auto; }
+        .mosaic-title {
+            font-weight: 800;
+            font-size: 4.5rem;
+            letter-spacing: 0.55em;
+            margin: 0;
+            text-shadow: 0 0 40px rgba(120, 180, 255, 0.7), 0 0 80px rgba(80, 100, 255, 0.4);
+        }
 
-        /* Titles and the banner */
+        .mosaic-subtitle {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.76rem;
+            letter-spacing: 0.3em;
+            opacity: 0.7;
+            text-transform: uppercase;
+            margin-top: 0.75rem;
+        }
+
+        .mosaic-divider {
+            width: 120px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(120, 180, 255, 0.6), transparent);
+            margin: 1.8rem auto;
+        }
+
         .load-banner {
-            font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.2em;
-            color: #00f096; border-color: rgba(0,240,150,0.45); background: rgba(0,50,25,0.45);
-            border-radius: 10px; padding: 0.7rem 1.2rem; text-align: center; margin-bottom: 1.5rem; border: 1px solid rgba(0,240,150,0.45);
-            backdrop-filter: blur(16px); box-shadow: 0 4px 24px rgba(60, 100, 255, 0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.74rem;
+            letter-spacing: 0.2em;
+            color: #00f096;
+            border-color: rgba(0,240,150,0.45);
+            background: rgba(0,50,25,0.45);
+            border-radius: 10px;
+            padding: 0.7rem 1.2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(0,240,150,0.45);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 4px 24px rgba(60, 100, 255, 0.2), inset 0 1px 0 rgba(255,255,255,0.08);
         }
-        .card-title { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase; margin-bottom: 1.25rem; border-left: 2px solid rgba(100, 160, 255, 0.8); padding-left: 0.75rem; }
-        .hint-text { font-family: 'Space Mono', monospace; font-size: 0.58rem; color: rgba(255,255,255,0.55); letter-spacing: 0.1em; line-height: 1.9; border-left: 2px solid rgba(80,140,255,0.5); padding-left: 0.75rem; margin-bottom: 1rem; }
 
-        /* Handles inputs and other buttons */
-        .input-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.85; margin-bottom: 0.5rem; display: block; }
+        .card-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            margin-bottom: 1.35rem;
+            border-left: 2px solid rgba(100, 160, 255, 0.8);
+            padding-left: 0.75rem;
+        }
+
+        .hint-text {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.62);
+            letter-spacing: 0.08em;
+            line-height: 1.9;
+            border-left: 2px solid rgba(80,140,255,0.5);
+            padding-left: 0.75rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .input-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 0.6rem;
+            display: block;
+        }
+
         .st-input {
-            width: 100%; background: rgba(10, 16, 50, 0.55); border: 1px solid rgba(80, 140, 255, 0.35); border-radius: 10px;
-            color: #ffffff; padding: 0.75rem; font-family: 'Syne', sans-serif; font-size: 0.92rem; box-sizing: border-box; margin-bottom: 1rem;
-            backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05); transition: 0.2s;
+            width: 100%;
+            background: rgba(10, 16, 50, 0.55);
+            border: 1px solid rgba(80, 140, 255, 0.35);
+            border-radius: 10px;
+            color: #ffffff;
+            padding: 1rem;
+            font-family: 'Syne', sans-serif;
+            font-size: 1.05rem;
+            box-sizing: border-box;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+            transition: 0.2s;
         }
-        .st-input::placeholder { color: rgba(255,255,255,0.25); }
-        .st-input:focus { outline: none; border-color: rgba(100, 160, 255, 0.7); box-shadow: 0 0 0 2px rgba(80, 140, 255, 0.2), 0 4px 20px rgba(0,0,0,0.3); }
 
-        .action-btn { background: rgba(30, 60, 160, 0.6); border: 1px solid rgba(80, 140, 255, 0.5); border-radius: 8px; color: #ffffff; padding: 0 1rem; cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.68rem; transition: 0.15s; }
-        .action-btn:hover { border-color: rgba(120, 180, 255, 0.7); box-shadow: 0 6px 30px rgba(60, 120, 255, 0.2); }
+        textarea.st-input {
+            min-height: 190px;
+            line-height: 1.6;
+        }
+
+        .st-input::placeholder {
+            color: rgba(255,255,255,0.25);
+        }
+
+        .st-input:focus {
+            outline: none;
+            border-color: rgba(100, 160, 255, 0.7);
+            box-shadow: 0 0 0 2px rgba(80, 140, 255, 0.2), 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .action-btn {
+            background: rgba(30, 60, 160, 0.6);
+            border: 1px solid rgba(80, 140, 255, 0.5);
+            border-radius: 8px;
+            color: #ffffff;
+            padding: 0 1.15rem;
+            cursor: pointer;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.76rem;
+            transition: 0.15s;
+            min-height: 54px;
+        }
+
+        .action-btn:hover {
+            border-color: rgba(120, 180, 255, 0.7);
+            box-shadow: 0 6px 30px rgba(60, 120, 255, 0.2);
+        }
+
+        /* Custom upload box so the file picker matches the rest of the page */
+        .upload-shell {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            min-height: 50px;
+            padding: 0.65rem 0.8rem;
+            background: rgba(10, 16, 50, 0.55);
+            border: 1px solid rgba(80, 140, 255, 0.35);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .upload-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            padding: 0.5rem 0.68rem;
+            border-radius: 9px;
+            background: linear-gradient(135deg, #2a5fff 0%, #1a35cc 100%);
+            border: 1px solid rgba(120, 180, 255, 0.55);
+            color: #ffffff;
+            text-decoration: none;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 4px 24px rgba(40, 90, 255, 0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+            transition: 0.2s ease;
+        }
+
+        .upload-trigger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 28px rgba(40, 90, 255, 0.45), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .upload-meta {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.64rem;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.55);
+            letter-spacing: 0.04em;
+            word-break: break-word;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 0.85rem;
+            margin-top: 1rem;
+        }
 
         .analyze-btn {
-            background: linear-gradient(135deg, #2a5fff 0%, #1a35cc 100%); border: 1px solid rgba(120, 180, 255, 0.5);
-            color: #ffffff; font-weight: 700; font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
-            border-radius: 10px; padding: 0.8rem 1.8rem; width: 100%; cursor: pointer; transition: all 0.2s ease; margin-top: 1rem;
+            background: linear-gradient(135deg, #2a5fff 0%, #1a35cc 100%);
+            border: 1px solid rgba(120, 180, 255, 0.5);
+            color: #ffffff;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.82rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            border-radius: 10px;
+            padding: 1rem 1.8rem;
+            width: 100%;
+            flex: 1.75;
+            cursor: pointer;
+            transition: all 0.2s ease;
             box-shadow: 0 4px 28px rgba(40, 90, 255, 0.45), inset 0 1px 0 rgba(255,255,255,0.15);
         }
-        .analyze-btn:hover { background: linear-gradient(135deg, #4a7fff 0%, #2a4fee 100%); box-shadow: 0 6px 40px rgba(60, 120, 255, 0.6), inset 0 1px 0 rgba(255,255,255,0.2); transform: translateY(-2px); }
 
-        /* The box for the verdict */
-        .verdict-container { text-align: center; padding: 2.2rem 2rem; border-radius: 16px; margin-bottom: 1.5rem; backdrop-filter: blur(20px); }
-        .verdict-real { background: rgba(0, 180, 100, 0.1); border: 1px solid rgba(0, 230, 150, 0.5); box-shadow: 0 0 40px rgba(0, 220, 140, 0.12), 0 8px 32px rgba(0,0,0,0.4); }
-        .verdict-fake { background: rgba(220, 40, 40, 0.1); border: 1px solid rgba(255, 90, 90, 0.5); box-shadow: 0 0 40px rgba(255, 80, 80, 0.12), 0 8px 32px rgba(0,0,0,0.4); }
-        .verdict-uncertain { background: rgba(200, 150, 0, 0.1); border: 1px solid rgba(240, 200, 0, 0.5); box-shadow: 0 0 40px rgba(240, 200, 0, 0.12), 0 8px 32px rgba(0,0,0,0.4); }
-        .verdict-text { font-size: 3.2rem; font-weight: 800; line-height: 1; letter-spacing: 0.06em; }
-        .v-real { color: #00f096; text-shadow: 0 0 30px rgba(0, 240, 150, 0.6); }
-        .v-fake { color: #ff4f4f; text-shadow: 0 0 30px rgba(255, 79, 79, 0.6); }
-        .v-unc  { color: #ffcc00; text-shadow: 0 0 30px rgba(255, 204, 0, 0.6); }
+        .analyze-btn:hover {
+            background: linear-gradient(135deg, #4a7fff 0%, #2a4fee 100%);
+            box-shadow: 0 6px 40px rgba(60, 120, 255, 0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
 
-        .conf-bar-bg { background: rgba(255,255,255,0.08); border-radius: 4px; height: 5px; margin: 0.5rem auto; overflow: hidden; max-width: 240px; }
-        .conf-bar-real { height: 100%; border-radius: 4px; background: linear-gradient(90deg,#006b40,#00f096); box-shadow: 0 0 12px rgba(0,240,150,0.7); transition: width 1s ease-in-out;}
-        .conf-bar-fake { height: 100%; border-radius: 4px; background: linear-gradient(90deg,#6b0000,#ff4f4f); box-shadow: 0 0 12px rgba(255,79,79,0.7); transition: width 1s ease-in-out;}
-        .conf-bar-unc  { height: 100%; border-radius: 4px; background: linear-gradient(90deg,#6b5000,#ffcc00); box-shadow: 0 0 12px rgba(255,204,0,0.7); transition: width 1s ease-in-out;}
+        .secondary-btn {
+            flex: 1;
+            background: rgba(12, 20, 60, 0.75);
+            border: 1px solid rgba(120, 160, 255, 0.35);
+            color: rgba(255,255,255,0.9);
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            border-radius: 10px;
+            padding: 1rem 1.1rem;
+            cursor: pointer;
+            transition: 0.2s ease;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+        }
 
-        /* For the metrics and XAI */
-        .metric-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1.2rem; margin-bottom: 1.5rem;}
-        .metric-pill { background: rgba(15, 25, 70, 0.6); border: 1px solid rgba(80, 140, 255, 0.3); border-radius: 10px; padding: 0.65rem 0.9rem; flex: 1; text-align: center; backdrop-filter: blur(12px); box-shadow: 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06); transition: 0.2s; }
-        .metric-pill:hover { border-color: rgba(120, 180, 255, 0.55); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(60, 120, 255, 0.2); }
-        .mp-label { font-family: 'Space Mono', monospace; font-size: 0.52rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.5); display: block; }
-        .mp-value { font-size: 1.05rem; font-weight: 700; color: #ffffff; display: block; margin-top: 0.2rem; }
+        .secondary-btn:hover {
+            border-color: rgba(160, 195, 255, 0.6);
+            background: rgba(20, 32, 92, 0.9);
+            transform: translateY(-2px);
+        }
 
-        .xai-box { background: rgba(15, 25, 70, 0.55); border: 1px solid rgba(80, 140, 255, 0.28); border-radius: 12px; padding: 1rem 1.15rem; margin-top: 0.85rem; margin-bottom: 1.5rem; backdrop-filter: blur(16px); box-shadow: 0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05); }
-        .xai-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; color: rgba(255,255,255,0.5); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 0.5rem; }
-        .xai-body  { font-family: 'Syne', sans-serif; font-size: 0.85rem; color: #ffffff; line-height: 1.75; }
-        .xai-footer { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(255,255,255,0.55); margin-top: 0.6rem; border-top: 1px solid rgba(80,140,255,0.18); padding-top: 0.55rem; }
+        .verdict-container {
+            text-align: center;
+            padding: 2.2rem 2rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(20px);
+        }
 
-        /* The expert row and expanding it */
-        details { margin-top: 0.5rem; }
-        summary { cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.7rem; color: #9c9cb5; outline: none; list-style: none; padding: 0.5rem 0; user-select: none; display: flex; justify-content: space-between; align-items: center;}
-        summary::-webkit-details-marker { display: none; }
-        summary:hover { color: #fafafa; }
-        
-        .expert-row { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0.9rem; background: rgba(12, 20, 60, 0.55); border: 1px solid rgba(60, 100, 220, 0.22); border-radius: 8px; margin-bottom: 0.35rem; gap: 1rem; backdrop-filter: blur(8px); box-shadow: 0 2px 12px rgba(0,0,0,0.25); transition: 0.15s; }
-        .expert-row:hover { border-color: rgba(100, 160, 255, 0.45); background: rgba(18, 32, 88, 0.7); transform: translateX(3px); }
-        .expert-name { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: rgba(255,255,255,0.85); min-width: 140px; }
-        
-        /* awaiting box */
-        .awaiting-box { height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed rgba(80, 140, 255, 0.35); border-radius: 16px; background: rgba(10, 18, 55, 0.45); backdrop-filter: blur(16px); box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); gap: 0.75rem; }
-        .hidden { display: none !important; }
+        .verdict-real {
+            background: rgba(0, 180, 100, 0.1);
+            border: 1px solid rgba(0, 230, 150, 0.5);
+            box-shadow: 0 0 40px rgba(0, 220, 140, 0.12), 0 8px 32px rgba(0,0,0,0.4);
+        }
 
-        /* Footer styling */
-        .site-footer { text-align: center; margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid rgba(60,100,220,0.18); font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 0.18em; color: rgba(255,255,255,0.35); }
+        .verdict-fake {
+            background: rgba(220, 40, 40, 0.1);
+            border: 1px solid rgba(255, 90, 90, 0.5);
+            box-shadow: 0 0 40px rgba(255, 80, 80, 0.12), 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .verdict-uncertain {
+            background: rgba(200, 150, 0, 0.1);
+            border: 1px solid rgba(240, 200, 0, 0.5);
+            box-shadow: 0 0 40px rgba(240, 200, 0, 0.12), 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .verdict-text {
+            font-size: 3.7rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: 0.06em;
+        }
+
+        .v-real {
+            color: #00f096;
+            text-shadow: 0 0 30px rgba(0, 240, 150, 0.6);
+        }
+
+        .v-fake {
+            color: #ff4f4f;
+            text-shadow: 0 0 30px rgba(255, 79, 79, 0.6);
+        }
+
+        .v-unc {
+            color: #ffcc00;
+            text-shadow: 0 0 30px rgba(255, 204, 0, 0.6);
+        }
+
+        .conf-bar-bg {
+            background: rgba(255,255,255,0.08);
+            border-radius: 4px;
+            height: 6px;
+            margin: 0.65rem auto;
+            overflow: hidden;
+            max-width: 260px;
+        }
+
+        .conf-bar-real {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg,#006b40,#00f096);
+            box-shadow: 0 0 12px rgba(0,240,150,0.7);
+            transition: width 1s ease-in-out;
+        }
+
+        .conf-bar-fake {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg,#6b0000,#ff4f4f);
+            box-shadow: 0 0 12px rgba(255,79,79,0.7);
+            transition: width 1s ease-in-out;
+        }
+
+        .conf-bar-unc {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg,#6b5000,#ffcc00);
+            box-shadow: 0 0 12px rgba(255,204,0,0.7);
+            transition: width 1s ease-in-out;
+        }
+
+        .metric-row {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-top: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-pill {
+            background: rgba(15, 25, 70, 0.6);
+            border: 1px solid rgba(80, 140, 255, 0.3);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+            transition: 0.2s;
+        }
+
+        .metric-pill:hover {
+            border-color: rgba(120, 180, 255, 0.55);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(60, 120, 255, 0.2);
+        }
+
+        .mp-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.62rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            display: block;
+        }
+
+        .mp-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: block;
+            margin-top: 0.3rem;
+        }
+
+        .xai-box {
+            background: rgba(15, 25, 70, 0.55);
+            border: 1px solid rgba(80, 140, 255, 0.28);
+            border-radius: 14px;
+            padding: 1.2rem 1.35rem;
+            margin-top: 0.9rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .xai-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.62rem;
+            color: rgba(255,255,255,0.58);
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            margin-bottom: 0.65rem;
+        }
+
+        .xai-body {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            color: #ffffff;
+            line-height: 1.8;
+        }
+
+        .xai-footer {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            color: rgba(245,248,255,0.78);
+            margin-top: 0.8rem;
+            border-top: 1px solid rgba(80,140,255,0.18);
+            padding-top: 0.75rem;
+            line-height: 1.85;
+        }
+
+        .xai-section-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.64rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(140, 180, 255, 0.75);
+            margin-top: 1rem;
+            margin-bottom: 0.55rem;
+        }
+
+        .xai-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+            margin-top: 0.35rem;
+        }
+
+        .xai-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(35, 58, 135, 0.55);
+            border: 1px solid rgba(100, 150, 255, 0.32);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72rem;
+            color: #edf3ff;
+        }
+
+        .xai-list {
+            margin: 0.35rem 0 0;
+            padding-left: 1.2rem;
+            color: rgba(255,255,255,0.92);
+        }
+
+        .xai-list li {
+            margin-bottom: 0.5rem;
+            font-size: 0.98rem;
+            line-height: 1.65;
+        }
+
+        .xai-link-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            margin-top: 0.35rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .xai-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.62rem 0.9rem;
+            border-radius: 10px;
+            border: 1px solid rgba(95, 145, 255, 0.34);
+            background: rgba(18, 30, 82, 0.75);
+            color: #edf4ff;
+            text-decoration: none;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.69rem;
+            letter-spacing: 0.05em;
+            transition: 0.2s ease;
+        }
+
+        .xai-link:hover {
+            border-color: rgba(140, 185, 255, 0.62);
+            transform: translateY(-2px);
+        }
+
+        .tech-note {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.76rem;
+            color: rgba(240,244,255,0.7);
+            margin-top: 0.8rem;
+            line-height: 1.75;
+        }
+
+        /* The XAI card has a simple view and a technical view */
+        .xai-toggle-row {
+            display: flex;
+            gap: 0.55rem;
+            margin-top: 1rem;
+            margin-bottom: 0.95rem;
+            flex-wrap: wrap;
+        }
+
+        .xai-toggle {
+            border: 1px solid rgba(95, 145, 255, 0.3);
+            background: rgba(18, 30, 82, 0.5);
+            color: rgba(255,255,255,0.7);
+            border-radius: 999px;
+            padding: 0.5rem 0.85rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .xai-toggle.active {
+            background: rgba(56, 96, 230, 0.88);
+            color: #ffffff;
+            border-color: rgba(150, 190, 255, 0.65);
+        }
+
+        .xai-carousel {
+            overflow: hidden;
+            border-radius: 12px;
+            border: 1px solid rgba(88, 132, 255, 0.2);
+            background: rgba(7, 12, 34, 0.3);
+            cursor: grab;
+        }
+
+        .xai-carousel.dragging {
+            cursor: grabbing;
+        }
+
+        .xai-track {
+            display: flex;
+            width: 200%;
+            transition: transform 0.28s ease;
+        }
+
+        .xai-panel {
+            width: 50%;
+            padding: 1rem 1rem 0.85rem;
+            box-sizing: border-box;
+        }
+
+        .xai-tech-summary {
+            font-size: 0.97rem;
+            line-height: 1.75;
+            color: rgba(255,255,255,0.94);
+        }
+
+        .xai-tech-summary strong {
+            color: #ffffff;
+        }
+
+        .xai-tech-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.9rem;
+            margin-bottom: 0.55rem;
+        }
+
+        .xai-tech-card {
+            padding: 0.85rem 0.9rem;
+            border-radius: 10px;
+            background: rgba(15, 24, 65, 0.65);
+            border: 1px solid rgba(85, 128, 255, 0.22);
+        }
+
+        .xai-tech-card-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(152, 189, 255, 0.68);
+            margin-bottom: 0.45rem;
+        }
+
+        .xai-tech-card-body {
+            font-size: 0.92rem;
+            line-height: 1.65;
+            color: rgba(255,255,255,0.92);
+        }
+
+        /* Keep the expert table visible, but separate it from the main XAI card */
+        details {
+            margin-top: 1rem;
+            padding: 0.8rem 1rem 0.9rem;
+            border-radius: 12px;
+            border: 1px solid rgba(95, 145, 255, 0.28);
+            background: rgba(10, 17, 48, 0.55);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+
+        summary {
+            cursor: pointer;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.82rem;
+            color: #d9e4ff;
+            outline: none;
+            list-style: none;
+            padding: 0.3rem 0;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary:hover {
+            color: #fafafa;
+        }
+
+        .expert-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem 1rem;
+            background: rgba(12, 20, 60, 0.55);
+            border: 1px solid rgba(60, 100, 220, 0.22);
+            border-radius: 8px;
+            margin-bottom: 0.45rem;
+            gap: 1rem;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+            transition: 0.15s;
+            flex-wrap: wrap;
+        }
+
+        .expert-row:hover {
+            border-color: rgba(100, 160, 255, 0.45);
+            background: rgba(18, 32, 88, 0.7);
+            transform: translateX(3px);
+        }
+
+        .expert-name {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.74rem;
+            color: rgba(255,255,255,0.85);
+            min-width: 160px;
+        }
+
+        @keyframes waiting-fade {
+            0%   { opacity: 0.45; }
+            50%  { opacity: 1.00; }
+            100% { opacity: 0.45; }
+        }
+
+        .awaiting-box {
+            height: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed rgba(80, 140, 255, 0.35);
+            border-radius: 16px;
+            background: rgba(10, 18, 55, 0.45);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+            gap: 0.75rem;
+        }
+
+        .awaiting-box.loading-state {
+            animation: waiting-fade 1.4s ease-in-out infinite;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .site-footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(60,100,220,0.18);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            letter-spacing: 0.18em;
+            color: rgba(255,255,255,0.35);
+        }
+
+        @media (max-width: 980px) {
+            .block-container {
+                padding: 1.5rem 1rem 3rem 1rem;
+            }
+
+            .columns {
+                flex-direction: column;
+                gap: 2rem;
+            }
+
+            .mosaic-title {
+                font-size: 2.7rem;
+                letter-spacing: 0.28em;
+            }
+
+            .mosaic-subtitle {
+                font-size: 0.62rem;
+                letter-spacing: 0.16em;
+                line-height: 1.7;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+
+            .metric-pill {
+                min-width: calc(50% - 0.5rem);
+            }
+
+            .verdict-text {
+                font-size: 3rem;
+            }
+
+            .xai-body {
+                font-size: 0.96rem;
+            }
+
+            .xai-list li {
+                font-size: 0.95rem;
+            }
+
+            .upload-shell {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .xai-tech-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .site-footer {
+                font-size: 0.5rem;
+                line-height: 1.7;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div class="block-container">
+    <!-- Main header -->
     <div class="mosaic-header">
         <div class="mosaic-title">MOSAIC</div>
         <div class="mosaic-subtitle">Multimodal Online Source Authenticity &amp; Integrity Checker</div>
@@ -139,10 +813,10 @@
     <div class="load-banner">⬡ &nbsp; EXPERT MODELS READY</div>
 
     <div class="columns">
-        
         <div class="column">
+            <!-- Input side -->
             <div class="card-title">INPUT</div>
-            
+
             <div class="hint-text">
                 BEST RESULTS: Real news headlines or social media posts with their original image.<br>
                 Designed for structured misinformation — not short phrases or mismatched images.
@@ -154,7 +828,11 @@
             <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                 <div style="flex: 1;">
                     <label class="input-label">Upload Image (required)</label>
-                    <input type="file" id="imageUpload" class="st-input" accept="image/png, image/jpeg, image/webp" style="margin-bottom: 0;">
+                    <div class="upload-shell">
+                        <input type="file" id="imageUpload" accept="image/png, image/jpeg, image/webp" style="display: none;">
+                        <label for="imageUpload" class="upload-trigger">Choose File</label>
+                        <div id="fileMeta" class="upload-meta">No file selected</div>
+                    </div>
                 </div>
                 <div style="flex: 1; display: flex; flex-direction: column;">
                     <label class="input-label">Or Scrape URL</label>
@@ -171,14 +849,18 @@
                 <div id="scrapeSource" class="hidden" style="font-family:Space Mono;font-size:0.55rem;color:rgba(255,255,255,0.45);letter-spacing:0.12em;margin-top:0.3rem;">⬡ SOURCE: </div>
             </div>
 
-            <button id="submitBtn" class="analyze-btn">RUN ANALYSIS</button>
+            <div class="button-row">
+                <button id="submitBtn" class="analyze-btn">RUN ANALYSIS</button>
+                <button id="clearBtn" class="secondary-btn" type="button">CLEAR</button>
+            </div>
         </div>
 
         <div class="column">
+            <!-- Result side -->
             <div id="awaitingInput" class="awaiting-box">
-                <div style="font-size:2rem;opacity:0.18;color:#6090ff;">⬡</div>
-                <div style="font-family:Space Mono;font-size:0.7rem;letter-spacing:0.25em;color:rgba(255,255,255,0.7);font-weight:700;">AWAITING INPUT</div>
-                <div style="font-family:Space Mono;font-size:0.55rem;letter-spacing:0.14em;color:rgba(255,255,255,0.3);">ENTER TEXT AND IMAGE TO BEGIN ANALYSIS</div>
+                <div id="awaitingIcon" style="font-size:2rem;opacity:0.18;color:#6090ff;">⬡</div>
+                <div id="awaitingTitle" style="font-family:Space Mono;font-size:0.7rem;letter-spacing:0.25em;color:rgba(255,255,255,0.7);font-weight:700;">AWAITING INPUT</div>
+                <div id="awaitingSubtitle" style="font-family:Space Mono;font-size:0.55rem;letter-spacing:0.14em;color:rgba(255,255,255,0.3);">ENTER TEXT AND IMAGE TO BEGIN ANALYSIS</div>
             </div>
 
             <div id="resultSection" class="hidden">
@@ -200,37 +882,424 @@
 </div>
 
 <script>
+    const API_BASE = "https://tatum-rotiferous-figurately.ngrok-free.dev";
     let scrapedBase64Data = null;
 
+    // Cache the page elements we update often during the demo flow.
+    const postTextInput = document.getElementById("postText");
+    const urlInput = document.getElementById("urlInput");
+    const imageUpload = document.getElementById("imageUpload");
+    const fileMeta = document.getElementById("fileMeta");
+    const imagePreview = document.getElementById("imagePreview");
+    const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+    const scrapeSource = document.getElementById("scrapeSource");
+    const awaitingInput = document.getElementById("awaitingInput");
+    const resultSection = document.getElementById("resultSection");
+    const verdictBox = document.getElementById("verdictBox");
+    const metricsBox = document.getElementById("metricsBox");
+    const xaiBox = document.getElementById("xaiBox");
+    const expertTable = document.getElementById("expertTable");
+    const scrapeBtn = document.getElementById("scrapeBtn");
+    const submitBtn = document.getElementById("submitBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const awaitingTitle = document.getElementById("awaitingTitle");
+    const awaitingSubtitle = document.getElementById("awaitingSubtitle");
+
+    // Convert a scraped base64 image into a file-like blob for the API.
     function base64ToBlob(b64) {
         const bytes = atob(b64);
         const arr = new Uint8Array(bytes.length);
-        for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-        return new Blob([arr], { type: 'image/jpeg' });
+        for (let i = 0; i < bytes.length; i++) {
+            arr[i] = bytes.charCodeAt(i);
+        }
+        return new Blob([arr], { type: "image/jpeg" });
     }
 
-    document.getElementById('imageUpload').addEventListener('change', function(event) {
+    // Small safety helper for any text we place inside HTML blocks.
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+    }
+
+    // Clear the image preview when the user resets the page or swaps inputs.
+    function clearImagePreview() {
+        imagePreview.src = "";
+        imagePreviewContainer.classList.add("hidden");
+        scrapeSource.innerText = "⬡ SOURCE: ";
+        scrapeSource.classList.add("hidden");
+    }
+
+    // Put the result column back into its default waiting state.
+    function resetResults() {
+        awaitingInput.classList.remove("loading-state");
+        awaitingInput.classList.remove("hidden");
+        resultSection.classList.add("hidden");
+        awaitingTitle.innerText = "AWAITING INPUT";
+        awaitingSubtitle.innerText = "ENTER TEXT AND IMAGE TO BEGIN ANALYSIS";
+        verdictBox.innerHTML = "";
+        metricsBox.innerHTML = "";
+        xaiBox.innerHTML = "";
+        expertTable.innerHTML = "";
+    }
+
+    // Switch the right column into a loading state while the backend is working.
+    function startLoadingState() {
+        awaitingInput.classList.remove("hidden");
+        awaitingInput.classList.add("loading-state");
+        resultSection.classList.add("hidden");
+        awaitingTitle.innerText = "ANALYZING";
+        awaitingSubtitle.innerText = "MOSAIC IS CHECKING THE TEXT AND IMAGE";
+    }
+
+    // Stop the loading pulse once the response comes back.
+    function stopLoadingState() {
+        awaitingInput.classList.remove("loading-state");
+    }
+
+    // Reset the whole input side and clear the current result.
+    function clearAll() {
+        postTextInput.value = "";
+        urlInput.value = "";
+        imageUpload.value = "";
+        fileMeta.innerText = "No file selected";
+        scrapedBase64Data = null;
+        clearImagePreview();
+        resetResults();
+        scrapeBtn.innerText = "SCRAPE";
+        submitBtn.innerText = "RUN ANALYSIS";
+        submitBtn.style.opacity = "1";
+    }
+
+    // Show file size in a simple format beside the upload button.
+    function formatFileSize(bytes) {
+        if (!bytes && bytes !== 0) {
+            return "";
+        }
+        if (bytes < 1024 * 1024) {
+            return `${(bytes / 1024).toFixed(1)} KB`;
+        }
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    // Give the user direct links to trusted fact-checking sites.
+    function buildSearchLinks(text) {
+        return [
+            {
+                label: "Google Fact Check",
+                url: "https://toolbox.google.com/factcheck/explorer"
+            },
+            {
+                label: "Search Snopes",
+                url: "https://www.snopes.com/fact-check/"
+            },
+            {
+                label: "Search Reuters",
+                url: "https://www.reuters.com/fact-check/"
+            },
+            {
+                label: "Search FactCheck.org",
+                url: "https://www.factcheck.org/"
+            }
+        ];
+    }
+
+    // Use this if the backend summary is ever missing.
+    function buildFallbackSummary(data, verdictText) {
+        const agreement = Math.round((data.agreement || 0) * 100);
+        const strength = (data.vote_strength || 0).toFixed(2);
+        return `The active experts leaned ${verdictText}, with ${agreement}% agreement and a vote gap of ${strength}.`;
+    }
+
+    // The XAI card has two slides: simple view and technical view.
+    function setupXaiCarousel() {
+        const carousel = document.querySelector(".xai-carousel");
+        const track = document.querySelector(".xai-track");
+        const toggles = Array.from(document.querySelectorAll(".xai-toggle"));
+
+        if (!carousel || !track || toggles.length === 0) {
+            return;
+        }
+
+        let currentIndex = 0;
+        let startX = 0;
+        let isDragging = false;
+
+        function setSlide(index) {
+            currentIndex = Math.max(0, Math.min(1, index));
+            track.style.transform = `translateX(-${currentIndex * 50}%)`;
+            toggles.forEach((toggle, toggleIndex) => {
+                toggle.classList.toggle("active", toggleIndex === currentIndex);
+            });
+        }
+
+        toggles.forEach((toggle) => {
+            toggle.addEventListener("click", () => {
+                setSlide(Number(toggle.dataset.index));
+            });
+        });
+
+        carousel.addEventListener("pointerdown", (event) => {
+            isDragging = true;
+            startX = event.clientX;
+            carousel.classList.add("dragging");
+        });
+
+        carousel.addEventListener("pointerup", (event) => {
+            if (!isDragging) {
+                return;
+            }
+            const deltaX = event.clientX - startX;
+            if (deltaX > 60) {
+                setSlide(currentIndex - 1);
+            } else if (deltaX < -60) {
+                setSlide(currentIndex + 1);
+            }
+            isDragging = false;
+            carousel.classList.remove("dragging");
+        });
+
+        carousel.addEventListener("pointerleave", () => {
+            isDragging = false;
+            carousel.classList.remove("dragging");
+        });
+
+        setSlide(0);
+    }
+
+    // Render the final verdict, explanation cards, and expert table.
+    function renderResults(data) {
+        stopLoadingState();
+        awaitingInput.classList.add("hidden");
+        resultSection.classList.remove("hidden");
+
+        const verdictText = data.final_verdict.replace(/^[a-z]/, char => char.toUpperCase());
+        const verdictUpper = verdictText.toUpperCase();
+        const verdictClass = verdictText === "Real" ? "verdict-real" : (verdictText === "Fake" ? "verdict-fake" : "verdict-uncertain");
+        const textClass = verdictText === "Real" ? "v-real" : (verdictText === "Fake" ? "v-fake" : "v-unc");
+        const barClass = verdictText === "Real" ? "conf-bar-real" : (verdictText === "Fake" ? "conf-bar-fake" : "conf-bar-unc");
+        const confidencePercent = Number((data.overall_confidence * 100).toFixed(1));
+        const decisionSide = verdictText === "Uncertain"
+            ? ((data.avg_fake || 0) > (data.avg_real || 0) ? "Fake" : "Real")
+            : verdictText;
+
+        verdictBox.innerHTML = `
+            <div class="verdict-container ${verdictClass}">
+                <div style="font-family:Space Mono;font-size:0.66rem;color:rgba(255,255,255,0.55);margin-bottom:0.8rem;letter-spacing:0.3em;">VERDICT</div>
+                <div class="verdict-text ${textClass}">${escapeHtml(verdictUpper)}</div>
+                <div style="font-family:Space Mono;font-size:0.68rem;color:rgba(255,255,255,0.62);margin-top:1.2rem;letter-spacing:0.15em;">CONFIDENCE &nbsp; ${Math.round(confidencePercent)}%</div>
+                <div class="conf-bar-bg"><div class="${barClass}" style="width:0%"></div></div>
+                ${verdictText === "Uncertain" ? `<div style="font-family:Space Mono;font-size:0.66rem;color:#ffcc00;margin-top:0.8rem;letter-spacing:0.12em;">REASON: ${escapeHtml((data.uncertainty_reason || "conflicting_signals").replace(/_/g, " ").toUpperCase())}</div>` : ""}
+            </div>
+        `;
+
+        setTimeout(() => {
+            const progressBar = document.querySelector(`.${barClass}`);
+            if (progressBar) {
+                progressBar.style.width = `${confidencePercent}%`;
+            }
+        }, 100);
+
+        metricsBox.innerHTML = `
+            <div class="metric-pill"><span class="mp-label">Vote Strength</span><span class="mp-value">${data.vote_strength.toFixed(2)}</span></div>
+            <div class="metric-pill"><span class="mp-label">Agreement</span><span class="mp-value">${Math.round(data.agreement * 100)}%</span></div>
+            <div class="metric-pill"><span class="mp-label">Language</span><span class="mp-value">${data.language_detected.toUpperCase() === "ZH" ? "ZH" : "EN"}</span></div>
+            <div style="width:100%;font-family:Space Mono;font-size:0.68rem;color:rgba(255,255,255,0.42);text-align:center;margin-top:0.9rem;letter-spacing:0.08em;">MOST CONFIDENT EXPERT: ${escapeHtml(data.most_confident_model)}</div>
+        `;
+
+        // These values drive both the simple explanation and the technical view.
+        const plainSummary = data.xai_plain_summary || buildFallbackSummary(data, verdictText);
+        const plainRoles = Array.isArray(data.xai_plain_roles) ? data.xai_plain_roles : [];
+        const reviewCues = Array.isArray(data.xai_review_cues) ? data.xai_review_cues : [];
+        const nextSteps = Array.isArray(data.xai_next_steps) ? data.xai_next_steps : [];
+        const activeScores = data.all_scores.filter(row => row.weight > 0);
+        const supportCount = Number.isFinite(data.xai_support_count)
+            ? data.xai_support_count
+            : activeScores.filter(row => row.predicted_label === decisionSide).length;
+        const activeCount = Number.isFinite(data.xai_active_count)
+            ? data.xai_active_count
+            : activeScores.length;
+        const searchLinks = buildSearchLinks(postTextInput.value);
+        const simpleRoleText = plainRoles.length > 0 ? plainRoles.slice(0, 2).join(" and ") : "the active experts";
+        const agreementText = data.agreement >= 0.8 ? "high" : (data.agreement >= 0.65 ? "moderate" : "limited");
+        const confidenceText = data.vote_strength >= 0.4 ? "clear" : (data.vote_strength >= 0.25 ? "noticeable" : "small");
+        const cueSentence = reviewCues.length > 0
+            ? reviewCues.map(cue => cue.label.toLowerCase()).slice(0, 2).join(" and ")
+            : "the overall text-image pattern";
+        const topSupporters = activeScores
+            .filter(row => row.predicted_label === decisionSide)
+            .sort((a, b) => (b.weight * Math.abs(b.Fake - b.Real)) - (a.weight * Math.abs(a.Fake - a.Real)))
+            .slice(0, 3);
+        const topOpposers = activeScores
+            .filter(row => row.predicted_label !== decisionSide)
+            .sort((a, b) => (b.weight * Math.abs(b.Fake - b.Real)) - (a.weight * Math.abs(a.Fake - a.Real)))
+            .slice(0, 2);
+        const datasetDescriptions = {
+            "snopes": "English fact-checking",
+            "xfacta": "cross-domain news verification",
+            "weibo": "Chinese social media",
+            "mmhl": "health misinformation"
+        };
+        const technicalDatasets = [];
+        topSupporters.forEach((row) => {
+            Object.keys(datasetDescriptions).forEach((key) => {
+                if (row.model.toLowerCase().includes(key) && !technicalDatasets.includes(datasetDescriptions[key])) {
+                    technicalDatasets.push(datasetDescriptions[key]);
+                }
+            });
+        });
+        const strongSupporters = activeScores.filter(row => row.predicted_label === decisionSide && Math.abs(row.Fake - row.Real) > 0.4 && row.weight >= 0.2).length;
+
+        // Build each section first so the final XAI card markup stays readable.
+        const roleMarkup = plainRoles.length > 0 ? `
+            <div class="xai-section-title">Main Expert Roles</div>
+            <div class="xai-chip-row">
+                ${plainRoles.map(role => `<span class="xai-chip">${escapeHtml(role)}</span>`).join("")}
+            </div>
+        ` : "";
+
+        const expandedSimpleSummary = verdictText === "Uncertain"
+            ? `${plainSummary} The strongest experts did not agree enough to make a confident call, so MOSAIC is asking the user to verify the source manually.`
+            : `${plainSummary} The decision was influenced most by ${simpleRoleText}, and the system noticed patterns related to ${cueSentence}.`;
+
+        const cueMarkup = reviewCues.length > 0 ? `
+            <div class="xai-section-title">Possible Review Cues</div>
+            <ul class="xai-list">
+                ${reviewCues.map(cue => {
+                    const matches = Array.isArray(cue.matches) ? cue.matches.map(match => escapeHtml(match)).join(", ") : "";
+                    return `<li><strong>${escapeHtml(cue.label)}:</strong> ${matches}</li>`;
+                }).join("")}
+            </ul>
+        ` : "";
+
+        const stepMarkup = nextSteps.length > 0 ? `
+            <div class="xai-section-title">What To Check Next</div>
+            <ul class="xai-list">
+                ${nextSteps.map(step => `<li>${escapeHtml(step)}</li>`).join("")}
+            </ul>
+        ` : "";
+
+        const linkMarkup = searchLinks.length > 0 ? `
+            <div class="xai-section-title">Quick Verification Links</div>
+            <div class="xai-link-row">
+                ${searchLinks.map(link => `
+                    <a class="xai-link" href="${link.url}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.label)}</a>
+                `).join("")}
+            </div>
+        ` : "";
+
+        const footerText = verdictText === "Uncertain"
+            ? "MOSAIC paused because the expert votes were not strong enough to make a confident call."
+            : `${supportCount} of ${activeCount} active experts supported this ${verdictText.toLowerCase()} verdict.`;
+
+        const technicalSummary = verdictText === "Uncertain"
+            ? "The ensemble did not find a strong enough margin between the two sides, so it held back instead of forcing an answer."
+            : `The strongest support came from ${topSupporters.map(row => escapeHtml(row.model)).join(", ") || "the active experts"}, which aligned around a ${escapeHtml(verdictText)} verdict.`;
+        const technicalSupportText = topSupporters.length > 0
+            ? topSupporters.map(row => `${escapeHtml(row.model)} (${row.predicted_label}, w=${row.weight.toFixed(2)})`).join("<br>")
+            : "No strong supporting experts were found.";
+        const technicalOppositionText = topOpposers.length > 0
+            ? topOpposers.map(row => `${escapeHtml(row.model)} (${row.predicted_label}, w=${row.weight.toFixed(2)})`).join("<br>")
+            : "No meaningful opposition among the active experts.";
+        const technicalDatasetText = technicalDatasets.length > 0
+            ? technicalDatasets.join(", ")
+            : "multiple domains";
+
+        xaiBox.innerHTML = `
+            <div class="xai-box">
+                <div class="xai-label">${verdictText === "Uncertain" ? "WHY MOSAIC PAUSED" : `WHY MOSAIC LEANED ${escapeHtml(verdictUpper)}`}</div>
+                <div class="xai-toggle-row">
+                    <button class="xai-toggle active" type="button" data-index="0">Simple View</button>
+                    <button class="xai-toggle" type="button" data-index="1">Technical View</button>
+                </div>
+                <div class="xai-carousel">
+                    <div class="xai-track">
+                        <div class="xai-panel">
+                            <div class="xai-body">${escapeHtml(expandedSimpleSummary)}</div>
+                            ${roleMarkup}
+                            ${cueMarkup}
+                            ${stepMarkup}
+                            ${linkMarkup}
+                        </div>
+                        <div class="xai-panel">
+                            <div class="xai-tech-summary">${technicalSummary}</div>
+                            <div class="xai-tech-grid">
+                                <div class="xai-tech-card">
+                                    <div class="xai-tech-card-label">Top Supporting Experts</div>
+                                    <div class="xai-tech-card-body">${technicalSupportText}</div>
+                                </div>
+                                <div class="xai-tech-card">
+                                    <div class="xai-tech-card-label">Opposing Experts</div>
+                                    <div class="xai-tech-card-body">${technicalOppositionText}</div>
+                                </div>
+                                <div class="xai-tech-card">
+                                    <div class="xai-tech-card-label">Main Datasets</div>
+                                    <div class="xai-tech-card-body">${escapeHtml(technicalDatasetText)}</div>
+                                </div>
+                                <div class="xai-tech-card">
+                                    <div class="xai-tech-card-label">Voting Snapshot</div>
+                                    <div class="xai-tech-card-body">${strongSupporters} strong supporters<br>${supportCount} of ${activeCount} active experts on this side<br>Most confident expert: ${escapeHtml(data.most_confident_model)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="xai-footer">
+                    ${escapeHtml(footerText)}
+                    <div class="tech-note">These cues are there to guide a person reviewing the claim. They are not exact word-level proof from the models.</div>
+                </div>
+            </div>
+        `;
+        setupXaiCarousel();
+
+        // Keep the full expert scores available below the main explanation.
+        let tableHtml = "";
+        data.all_scores.forEach(row => {
+            const color = row.predicted_label === "Real" ? "#00f096" : "#ff4f4f";
+            const opacity = row.weight > 0 ? Math.max(0.25, Math.min(1.0, row.weight * 2)) : 0.25;
+            tableHtml += `
+                <div class="expert-row" style="opacity:${opacity.toFixed(2)}">
+                    <span class="expert-name">${escapeHtml(row.model)}</span>
+                    <span style="color:${color};font-family:Space Mono;font-size:0.78rem;font-weight:700;min-width:60px;">${escapeHtml(row.predicted_label)}</span>
+                    <span style="font-family:Space Mono;font-size:0.68rem;color:rgba(255,255,255,0.55);">R=${row.Real.toFixed(2)} &nbsp; F=${row.Fake.toFixed(2)}</span>
+                    <span style="font-family:Space Mono;font-size:0.68rem;color:rgba(255,255,255,0.38);margin-left:auto;">w=${row.weight.toFixed(2)}</span>
+                </div>
+            `;
+        });
+        expertTable.innerHTML = tableHtml;
+    }
+
+    // If the user uploads a file manually, that becomes the active image.
+    imageUpload.addEventListener("change", function(event) {
         const file = event.target.files[0];
         if (file) {
             scrapedBase64Data = null;
-            document.getElementById('scrapeSource').classList.add('hidden');
+            urlInput.value = "";
+            scrapeSource.classList.add("hidden");
+            fileMeta.innerText = `${file.name} • ${formatFileSize(file.size)}`;
+
             const reader = new FileReader();
             reader.onload = function(e) {
-                document.getElementById('imagePreview').src = e.target.result;
-                document.getElementById('imagePreviewContainer').classList.remove('hidden');
-            }
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.classList.remove("hidden");
+            };
             reader.readAsDataURL(file);
         }
     });
 
-    const scrapeBtn = document.getElementById('scrapeBtn');
-    scrapeBtn.addEventListener('click', async () => {
-        const url = document.getElementById('urlInput').value;
-        if (!url) return alert("Please enter a URL to scrape.");
-        
+    // Scrape text and image from a URL using the backend helper.
+    scrapeBtn.addEventListener("click", async () => {
+        const url = urlInput.value;
+        if (!url) {
+            return alert("Please enter a URL to scrape.");
+        }
+
         scrapeBtn.innerText = "...";
         try {
-            const scrapeResponse = await fetch("https://tatum-rotiferous-figurately.ngrok-free.dev/scrape", {
+            const scrapeResponse = await fetch(`${API_BASE}/scrape`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -238,167 +1307,86 @@
                 },
                 body: JSON.stringify({ url: url })
             });
-            const data = await response.json();
-            
-            document.getElementById('postText').value = data.text;
+
+            const data = await scrapeResponse.json();
+            if (!scrapeResponse.ok) {
+                throw new Error(data.error || "Scraping failed");
+            }
+
+            postTextInput.value = data.text || "";
             scrapedBase64Data = data.image;
-            document.getElementById('imagePreview').src = "data:image/jpeg;base64," + data.image;
-            document.getElementById('imagePreviewContainer').classList.remove('hidden');
-            
-            let domain = new URL(url).hostname;
-            let srcEl = document.getElementById('scrapeSource');
-            srcEl.innerText = "⬡ SOURCE: " + domain;
-            srcEl.classList.remove('hidden');
+            imageUpload.value = "";
+            fileMeta.innerText = data.image ? "Image pulled from scraped page" : "No image found in scraped page";
+
+            if (data.image) {
+                imagePreview.src = "data:image/jpeg;base64," + data.image;
+                imagePreviewContainer.classList.remove("hidden");
+                scrapeSource.innerText = "⬡ SOURCE: " + new URL(url).hostname;
+                scrapeSource.classList.remove("hidden");
+            } else {
+                clearImagePreview();
+            }
+
+            if (data.warning) {
+                alert(data.warning);
+            }
 
             scrapeBtn.innerText = "SCRAPE";
         } catch (err) {
-            alert("Scraping failed. Is the backend running?");
+            alert(err.message || "Scraping failed. Is the backend running?");
             console.error(err);
             scrapeBtn.innerText = "SCRAPE";
         }
     });
 
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.addEventListener('click', async () => {
-        const text = document.getElementById('postText').value;
-        const fileInput = document.getElementById('imageUpload').files[0];
+    clearBtn.addEventListener("click", clearAll);
+
+    // Send the text and image to the backend for the actual ensemble prediction.
+    submitBtn.addEventListener("click", async () => {
+        const text = postTextInput.value;
+        const fileInput = imageUpload.files[0];
 
         const formData = new FormData();
         formData.append("text", text);
-        
+
         if (fileInput) {
-            formData.append('image', fileInput);
+            formData.append("image", fileInput);
         } else if (scrapedBase64Data) {
-            formData.append('image', base64ToBlob(scrapedBase64Data), 'scraped.jpg');
+            formData.append("image", base64ToBlob(scrapedBase64Data), "scraped.jpg");
         } else {
             return alert("Please upload an image or scrape a URL.");
         }
 
         try {
+            startLoadingState();
             submitBtn.innerText = "ANALYZING...";
             submitBtn.style.opacity = "0.5";
-            
-            const response = await fetch("https://tatum-rotiferous-figurately.ngrok-free.dev/predict", { 
-                method: "POST", 
+
+            const response = await fetch(`${API_BASE}/predict`, {
+                method: "POST",
                 headers: {
-                    "ngrok-skip-browser-warning": "true" // This bypasses the landing page for ngrok
+                    "ngrok-skip-browser-warning": "true"
                 },
-                body: formData 
+                body: formData
             });
             const data = await response.json();
-            
+
+            if (!response.ok) {
+                throw new Error(data.error || "Analysis failed");
+            }
+
             renderResults(data);
-            
             submitBtn.innerText = "RUN ANALYSIS";
             submitBtn.style.opacity = "1";
-        } catch(err) {
+        } catch (err) {
+            stopLoadingState();
+            resetResults();
             alert("Analysis failed. Is the backend running?");
             console.error(err);
             submitBtn.innerText = "RUN ANALYSIS";
             submitBtn.style.opacity = "1";
         }
     });
-
-    function renderResults(data) {
-        document.getElementById('awaitingInput').classList.add('hidden');
-        document.getElementById('resultSection').classList.remove('hidden');
-
-        const v = data.final_verdict.replace(/^[a-z]/, char => char.toUpperCase()); // Capitalize first letter
-        const vUpper = v.toUpperCase();
-        let vClass = v === "Real" ? "verdict-real" : (v === "Fake" ? "verdict-fake" : "verdict-uncertain");
-        let tClass = v === "Real" ? "v-real" : (v === "Fake" ? "v-fake" : "v-unc");
-        let bClass = v === "Real" ? "conf-bar-real" : (v === "Fake" ? "conf-bar-fake" : "conf-bar-unc");
-        let confPercent = (data.overall_confidence * 100).toFixed(1);
-
-        document.getElementById('verdictBox').innerHTML = `
-            <div class="verdict-container ${vClass}">
-                <div style="font-family:Space Mono;font-size:0.55rem;color:rgba(255,255,255,0.5);margin-bottom:0.7rem;letter-spacing:0.3em;">VERDICT</div>
-                <div class="verdict-text ${tClass}">${vUpper}</div>
-                <div style="font-family:Space Mono;font-size:0.58rem;color:rgba(255,255,255,0.55);margin-top:1.1rem;letter-spacing:0.15em;">CONFIDENCE &nbsp; ${Math.round(confPercent)}%</div>
-                <div class="conf-bar-bg"><div class="${bClass}" style="width:0%"></div></div>
-                ${v === "Uncertain" ? `<div style="font-family:Space Mono;font-size:0.58rem;color:#ffcc00;margin-top:0.7rem;letter-spacing:0.12em;">REASON: ${data.uncertainty_reason.replace(/_/g, " ").toUpperCase()}</div>` : ""}
-            </div>
-        `;
-        setTimeout(() => { document.querySelector(`.${bClass}`).style.width = `${confPercent}%`; }, 100);
-
-        document.getElementById('metricsBox').innerHTML = `
-            <div class="metric-pill"><span class="mp-label">Vote Strength</span><span class="mp-value">${data.vote_strength.toFixed(2)}</span></div>
-            <div class="metric-pill"><span class="mp-label">Agreement</span><span class="mp-value">${Math.round(data.agreement * 100)}%</span></div>
-            <div class="metric-pill"><span class="mp-label">Language</span><span class="mp-value">${data.language_detected.toUpperCase() === 'ZH' ? 'ZH' : 'EN'}</span></div>
-            <div class="metric-pill"><span class="mp-label">Image</span><span class="mp-value">${data.used_real_image ? 'YES' : 'NO'}</span></div>
-            <div style="width:100%;font-family:Space Mono;font-size:0.55rem;color:rgba(255,255,255,0.35);text-align:center;margin-top:0.9rem;letter-spacing:0.1em;">MOST CONFIDENT EXPERT: ${data.most_confident_model}</div>
-        `;
-
-        // XAI
-        if (v === "Uncertain") {
-            const reason = data.uncertainty_reason ? data.uncertainty_reason.replace(/_/g, " ") : "conflicting signals";
-            document.getElementById('xaiBox').innerHTML = `
-                <div class="xai-box">
-                    <div class="xai-label">WHY UNCERTAIN</div>
-                    <div class="xai-body">The ensemble could not reach a confident decision due to ${reason}. This input may fall outside the training distribution of the available models.</div>
-                </div>`;
-        } else {
-            // for finding the top 3 supporting models based on the logic of: (weight * score gap)
-            let supporters = data.all_scores
-                .filter(m => m.predicted_label === v && m.weight > 0)
-                .sort((a, b) => (b.weight * Math.abs(b.Fake - b.Real)) - (a.weight * Math.abs(a.Fake - a.Real)))
-                .slice(0, 3);
-            
-            if (supporters.length > 0) {
-                let modelNames = supporters.map(m => m.model).join(", ");
-                let datasetDescriptions = {
-                    "snopes": "English political fact-checking",
-                    "xfacta": "cross-domain news verification",
-                    "weibo": "Chinese social media",
-                    "mmhl": "medical and health misinformation"
-                };
-                
-                let datasetsMentioned = [];
-                supporters.forEach(m => {
-                    for (let key in datasetDescriptions) {
-                        if (m.model.toLowerCase().includes(key) && !datasetsMentioned.includes(datasetDescriptions[key])) {
-                            datasetsMentioned.push(datasetDescriptions[key]);
-                        }
-                    }
-                });
-                
-                let datasetStr = datasetsMentioned.length > 0 ? datasetsMentioned.join(" and ") : "multiple domains";
-                let totalActive = data.all_scores.filter(m => m.weight > 0).length;
-                let strongVoters = data.all_scores.filter(m => m.predicted_label === v && Math.abs(m.Fake - m.Real) > 0.4 && m.weight > 0.3).length;
-                let color = v === "Real" ? "#00f096" : "#ff4f4f";
-
-                document.getElementById('xaiBox').innerHTML = `
-                    <div class="xai-box">
-                        <div class="xai-label">WHY ${vUpper}</div>
-                        <div class="xai-body">
-                            Decision driven primarily by <span style="color:${color};font-weight:700;">${modelNames}</span>,
-                            trained on ${datasetStr} datasets. These models showed the strongest and most consistent signal
-                            toward a <span style="color:${color};font-weight:700;">${v}</span> verdict.
-                        </div>
-                        <div class="xai-footer">
-                            ${strongVoters} of ${totalActive} active models voted
-                            <span style="color:${color};font-weight:700;">${v}</span> with high confidence.
-                        </div>
-                    </div>`;
-            } else {
-                document.getElementById('xaiBox').innerHTML = ""; // Clears if there aren't any supporters found
-            }
-        }
-
-        let tableHtml = "";
-        data.all_scores.forEach(row => {
-            const color = row.predicted_label === "Real" ? "#00f096" : "#ff4f4f";
-            const opacity = row.weight > 0 ? Math.max(0.25, Math.min(1.0, row.weight * 2)) : 0.25; 
-            tableHtml += `
-            <div class="expert-row" style="opacity:${opacity.toFixed(2)}">
-                <span class="expert-name">${row.model}</span>
-                <span style="color:${color};font-family:Space Mono;font-size:0.68rem;font-weight:700;min-width:55px;">${row.predicted_label}</span>
-                <span style="font-family:Space Mono;font-size:0.58rem;color:rgba(255,255,255,0.5);">R=${row.Real.toFixed(2)} &nbsp; F=${row.Fake.toFixed(2)}</span>
-                <span style="font-family:Space Mono;font-size:0.58rem;color:rgba(255,255,255,0.35);margin-left:auto;">w=${row.weight.toFixed(2)}</span>
-            </div>`;
-        });
-        document.getElementById('expertTable').innerHTML = tableHtml;
-    }
 </script>
 </body>
 </html>

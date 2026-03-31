@@ -138,6 +138,7 @@ def scrape():
         return jsonify({
             "text":  scraped.get("text", ""),
             "image": image_b64,
+            "warning": scraped.get("warning"),
         })
 
     except Exception as e:
@@ -157,6 +158,5 @@ def health():
 
 # The Entry point 
 if __name__ == "__main__":
-    # debug=False is important. Debug mode reloads the server which
-    # would reload all models and cause GPU memory issues
+    # Make sure to to listen on all interfaces 
     app.run(host="0.0.0.0", port=5000, debug=False)

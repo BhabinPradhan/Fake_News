@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+from collections import OrderedDict
 from PIL import Image
 import torch
 
@@ -240,9 +241,122 @@ class ModelManager:
             return fake_p, real_p
         return real_p, fake_p
 
+    # Map each expert to a plain-English role for the frontend explanation.
+    def _plain_role(self, model_label):
+        dataset_roles = {
+            "snopes": "fact-checking expert",
+            "xfacta": "news verification expert",
+            "weibo": "Chinese social media expert",
+            "mmhl": "health misinformation expert",
+        }
+        lower_label = model_label.lower()
+        for key, role in dataset_roles.items():
+            if key in lower_label:
+                return role
+        return "multimodal verification expert"
+
+    # Pull out simple text cues the UI can show to the user.
+    def _extract_review_cues(self, text):
+        lowered = text.lower()
+        cues = []
+
+        # Keep cue matches short and remove duplicates.
+        def add_cue(label, matches):
+            cleaned = []
+            for match in matches:
+                if match and match not in cleaned:
+                    cleaned.append(match)
+            if cleaned:
+                cues.append({"label": label, "matches": cleaned[:3]})
+
+        health_terms = [
+            "covid", "vaccine", "doctor", "medical", "health",
+            "virus", "symptom", "smell", "cure", "treatment",
+            "新冠", "疫情", "治愈", "医生", "健康"
+        ]
+        urgency_terms = [
+            "breaking", "warning", "urgent", "must", "immediately",
+            "shocking", "miracle", "secret", "转发", "求证", "震惊", "紧急"
+        ]
+        money_terms = [
+            "million", "billion", "inherit", "prize", "free", "cash",
+            "giveaway", "美元", "亿元", "万", "$"
+        ]
+
+        add_cue("Health-related claim", [term for term in health_terms if term in lowered or term in text])
+        add_cue("Urgent or emotional wording", [term for term in urgency_terms if term in lowered or term in text])
+        add_cue("Money or scale claims", [term for term in money_terms if term in lowered or term in text])
+
+        number_matches = re.findall(r"\b\d+(?:\.\d+)?%?\b", text)
+        if number_matches:
+            add_cue("Notable numbers", number_matches[:3])
+
+        word_count = len(text.split())
+        if word_count <= self.ultra_short_max_words:
+            add_cue("Very short text", [f"{word_count} words"])
+
+        return cues[:3]
+
+    # Build the extra XAI fields that the frontend shows in the 'simple' view.
+    def _build_xai_fields(self, text, all_results, final_verdict, agreement_weight, vote_strength, is_uncertain, uncertainty_reason):
+        active = [r for r in all_results if r["weight"] > 0.0]
+        supporters = sorted(
+            [r for r in active if r["predicted_label"] == final_verdict],
+            key=lambda x: x["weight"] * x["margin"],
+            reverse=True
+        )
+        top_supporters = supporters[:3]
+        role_map = OrderedDict()
+        for row in top_supporters:
+            role = self._plain_role(row["model"])
+            if role not in role_map:
+                role_map[role] = row["model"]
+
+        plain_roles = list(role_map.keys())
+        support_count = len(supporters)
+        active_count = len(active)
+
+        if agreement_weight >= 0.80:
+            agreement_phrase = "high"
+        elif agreement_weight >= 0.65:
+            agreement_phrase = "moderate"
+        else:
+            agreement_phrase = "low"
+
+        if vote_strength >= 0.40:
+            strength_phrase = "strong"
+        elif vote_strength >= 0.25:
+            strength_phrase = "moderate"
+        else:
+            strength_phrase = "narrow"
+
+        if is_uncertain:
+            summary = "The experts did not align strongly enough to make a confident decision."
+        elif final_verdict == "Fake":
+            summary = f"Most active experts leaned Fake, with {agreement_phrase} agreement and a {strength_phrase} separation between the Real and Fake votes."
+        else:
+            summary = f"Most active experts leaned Real, with {agreement_phrase} agreement and a {strength_phrase} separation between the Real and Fake votes."
+
+        next_steps = [
+            "Search the claim on fact-check sites.",
+            "Look for the original source of the post or image.",
+            "Treat this as a pattern-based AI signal, not proof."
+        ]
+        if uncertainty_reason:
+            next_steps[0] = "Look for the original source before trusting the claim."
+
+        return {
+            "xai_plain_summary": summary,
+            "xai_plain_roles": plain_roles,
+            "xai_support_count": support_count,
+            "xai_active_count": active_count,
+            "xai_review_cues": self._extract_review_cues(text),
+            "xai_next_steps": next_steps,
+        }
+
     # Core prediction
     def get_prediction(self, text, image_path=None):
-        # Queries active experts and performs weighted soft voting. Both text and image are required.
+        # Queries active experts and performs weighted soft voting
         if not isinstance(text, str) or not text.strip():
             raise ValueError("`text` is required and must be a non-empty string.")
         if not self._has_real_image_input(image_path):
@@ -260,17 +374,17 @@ class ModelManager:
         total_weight  = 0.0
 
         for model_label, expert, weight in self._iter_experts(lang, text):
-            res             = expert.predict(text, img)
-            real_p, fake_p  = self._normalize_probs(res['Real'], res['Fake'])
-            real_p, fake_p  = self._apply_label_order(model_label, real_p, fake_p)
-            margin          = abs(real_p - fake_p)
+            res = expert.predict(text, img)
+            real_p, fake_p = self._normalize_probs(res['Real'], res['Fake'])
+            real_p, fake_p = self._apply_label_order(model_label, real_p, fake_p)
+            margin = abs(real_p - fake_p)
 
             all_results.append({
-                "model":           model_label,
-                "Real":            real_p,
-                "Fake":            fake_p,
-                "weight":          float(weight),
-                "margin":          margin,
+                "model": model_label,
+                "Real": real_p,
+                "Fake": fake_p,
+                "weight": float(weight),
+                "margin": margin,
                 "predicted_label": "Fake" if fake_p > real_p else "Real",
             })
             weighted_real += real_p * weight
@@ -306,11 +420,11 @@ class ModelManager:
             r["predicted_label"] == final_verdict for r in anchor_votes
         )
         
-        # Avoid boosting confidence for ultra-short text where semantics are usually underspecified.
+        # We need to avoid boosting confidence for ultra-short text where info for the text is limited.
         if anchor_unanimous and not is_ultra_short:
             confidence = min(0.99, confidence * 1.10)
 
-        # Determine uncertainty
+        # Find out the uncertainty 
         ultra_short_low_agreement = is_ultra_short and (agreement_weight < self.ultra_short_min_agreement)
         is_uncertain = (
             (vote_strength < self.min_vote_strength)
@@ -331,22 +445,34 @@ class ModelManager:
 
         best_overall = max(all_results, key=lambda x: x["margin"])
 
+        # Lets package the extra explanation data once so both frontends can reuse it.
+        xai_fields = self._build_xai_fields(
+            text,
+            all_results,
+            final_verdict,
+            agreement_weight,
+            vote_strength,
+            is_uncertain,
+            uncertainty_reason,
+        )
+
         return {
-            "final_verdict":        "Uncertain" if is_uncertain else final_verdict,
-            "overall_confidence":   confidence,
+            "final_verdict": "Uncertain" if is_uncertain else final_verdict,
+            "overall_confidence":confidence,
             "most_confident_model": best_overall['model'],
-            "best_model_score":     best_overall["margin"],
-            "language_detected":    lang,
-            "used_real_image":      True,
-            "text_word_count":      word_count,
-            "used_short_profile":   is_short_text,
-            "vote_strength":        vote_strength,
-            "agreement":            agreement_weight,
-            "is_uncertain":         is_uncertain,
-            "uncertainty_reason":   uncertainty_reason,
-            "avg_real":             avg_real,
-            "avg_fake":             avg_fake,
-            "all_scores":           all_results,
+            "best_model_score":best_overall["margin"],
+            "language_detected":lang,
+            "used_real_image":True,
+            "text_word_count": word_count,
+            "used_short_profile": is_short_text,
+            "vote_strength": vote_strength,
+            "agreement": agreement_weight,
+            "is_uncertain": is_uncertain,
+            "uncertainty_reason": uncertainty_reason,
+            "avg_real": avg_real,
+            "avg_fake": avg_fake,
+            "all_scores": all_results,
+            **xai_fields,
         }
 
     # Batch benchmark
@@ -355,44 +481,42 @@ class ModelManager:
     def benchmark_prompts(self, cases):
         results = []
         for i, case in enumerate(cases, start=1):
-            text       = case.get("text", "")
+            text = case.get("text", "")
             image_path = case.get("image_path")
-            expected   = case.get("expected")
-            pred       = self.get_prediction(text, image_path)
+            expected = case.get("expected")
+            pred = self.get_prediction(text, image_path)
 
             row = {
-                "case_id":              i,
-                "text":                 text,
-                "expected":             expected,
-                "predicted":            pred["final_verdict"],
-                "confidence":           pred["overall_confidence"],
-                "language_detected":    pred["language_detected"],
-                "used_real_image":      pred["used_real_image"],
-                "vote_strength":        pred["vote_strength"],
-                "agreement":            pred["agreement"],
-                "is_uncertain":         pred["is_uncertain"],
-                "uncertainty_reason":   pred["uncertainty_reason"],
+                "case_id": i,
+                "text": text,
+                "expected": expected,
+                "predicted": pred["final_verdict"],
+                "confidence": pred["overall_confidence"],
+                "language_detected": pred["language_detected"],
+                "used_real_image":pred["used_real_image"],
+                "vote_strength":  pred["vote_strength"],
+                "agreement": pred["agreement"],
+                "is_uncertain": pred["is_uncertain"],
+                "uncertainty_reason": pred["uncertainty_reason"],
                 "most_confident_model": pred["most_confident_model"],
-                "best_model_score":     pred["best_model_score"],
+                "best_model_score": pred["best_model_score"],
             }
             if expected in ("Real", "Fake"):
                 row["correct"] = (row["predicted"] == expected)
             results.append(row)
         return results
 
-    # Label-order auto-fit
+    # This function checks benchmark cases with known labels to see if any expert is using reversed class outputs
+    # It is called during evaluation before interpreting benchmark results
     def fit_label_order_from_benchmark(self, cases, min_cases=3, min_improvement=0.15, auto_apply=True):
-        # Detect likely label-order inversion per expert using expected labels.
-        # Requires real image+text cases with known ground truth labels.
-        
         labeled_cases = [c for c in cases if c.get("expected") in ("Real", "Fake")]
         if len(labeled_cases) < min_cases:
             raise ValueError(f"Need at least {min_cases} labeled cases to fit label order.")
 
         prepared = [{
-            "text":     c["text"],
+            "text": c["text"],
             "expected": c["expected"],
-            "img":      self._resolve_input_image(c.get("image_path")),
+            "img": self._resolve_input_image(c.get("image_path")),
         } for c in labeled_cases]
 
         report = {}
@@ -400,15 +524,15 @@ class ModelManager:
             normal_correct  = 0
             flipped_correct = 0
             for case in prepared:
-                res            = expert.predict(case["text"], case["img"])
+                res = expert.predict(case["text"], case["img"])
                 real_p, fake_p = self._normalize_probs(res["Real"], res["Fake"])
                 if ("Fake" if fake_p > real_p else "Real") == case["expected"]: normal_correct  += 1
                 if ("Fake" if real_p > fake_p else "Real") == case["expected"]: flipped_correct += 1
 
-            n               = len(prepared)
-            normal_acc      = normal_correct  / n
-            flipped_acc     = flipped_correct / n
-            improvement     = flipped_acc - normal_acc
+            n = len(prepared)
+            normal_acc = normal_correct  / n
+            flipped_acc = flipped_correct / n
+            improvement = flipped_acc - normal_acc
             suggested_order = "FR" if improvement >= min_improvement else "RF"
 
             if auto_apply:

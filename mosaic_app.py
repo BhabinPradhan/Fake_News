@@ -1,11 +1,7 @@
-"""
-MOSAIC — Multimodal Online Source Authenticity and Integrity Checker
-Run with: streamlit run mosaic_app.py
-"""
-
 import os
 import sys
 import tempfile
+
 import streamlit as st
 from PIL import Image
 
@@ -17,18 +13,21 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+
 @st.cache_resource(show_spinner=False)
 def load_manager():
     from model_manager import ModelManager
+
     manager = ModelManager()
     return manager
+
 
 st.markdown("""
 <style>
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
 
-/* ── Base ── */
+/* Main page styles */
 html, body, [class*="css"] {
     font-family: 'Syne', sans-serif;
     background-color: #03040e;
@@ -43,7 +42,7 @@ html, body, [class*="css"] {
     background: transparent;
 }
 
-/* ── Background grid ── */
+/* Background grid */
 body::before {
     content: '';
     position: fixed;
@@ -56,7 +55,7 @@ body::before {
     pointer-events: none;
 }
 
-/* ── Glow orb ── */
+/* Header glow */
 body::after {
     content: '';
     position: fixed;
@@ -74,7 +73,7 @@ body::after {
     filter: blur(70px);
 }
 
-/* ── Header ── */
+/* Main title area */
 .mosaic-header {
     text-align: center;
     padding: 2.5rem 0 1.5rem 0;
@@ -134,7 +133,7 @@ body::after {
     margin: 1.8rem auto;
 }
 
-/* ── Load banner ── */
+/* Model status banner */
 .load-banner {
     font-family: 'Space Mono', monospace;
     font-size: 0.62rem;
@@ -153,7 +152,7 @@ body::after {
 }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 
-/* ── Card title ── */
+/* Section heading */
 .card-title {
     font-family: 'Space Mono', monospace;
     font-size: 0.6rem;
@@ -165,7 +164,7 @@ body::after {
     padding-left: 0.75rem;
 }
 
-/* ── ALL widget labels — white ── */
+/* Keep form labels white */
 .stTextArea label, .stTextInput label, .stFileUploader label,
 label, .stFileUploader > label {
     font-family: 'Space Mono', monospace !important;
@@ -176,7 +175,7 @@ label, .stFileUploader > label {
     opacity: 0.85 !important;
 }
 
-/* ── Text area ── */
+/* Text area */
 .stTextArea textarea {
     background: rgba(10, 16, 50, 0.55) !important;
     border: 1px solid rgba(80, 140, 255, 0.35) !important;
@@ -193,7 +192,7 @@ label, .stFileUploader > label {
     box-shadow: 0 0 0 2px rgba(80, 140, 255, 0.2), 0 4px 20px rgba(0,0,0,0.3) !important;
 }
 
-/* ── Text input ── */
+/* Link input */
 .stTextInput input {
     background: rgba(10, 16, 50, 0.55) !important;
     border: 1px solid rgba(80, 140, 255, 0.35) !important;
@@ -210,7 +209,7 @@ label, .stFileUploader > label {
     box-shadow: 0 0 0 2px rgba(80, 140, 255, 0.2) !important;
 }
 
-/* ── File uploader ── */
+/* Upload area */
 .stFileUploader > div {
     background: rgba(10, 16, 50, 0.5) !important;
     border: 1px dashed rgba(80, 140, 255, 0.45) !important;
@@ -223,13 +222,15 @@ label, .stFileUploader > label {
     border-color: rgba(120, 180, 255, 0.7) !important;
     box-shadow: 0 6px 30px rgba(60, 120, 255, 0.2) !important;
 }
-/* All text inside uploader — white */
+
+/* Keep upload text readable */
 .stFileUploader p, .stFileUploader span, .stFileUploader div,
 .stFileUploader small, .stFileUploader section {
     color: #ffffff !important;
     opacity: 0.85 !important;
 }
-/* Browse files button */
+
+/* Upload button */
 .stFileUploader button {
     background: rgba(30, 60, 160, 0.6) !important;
     border: 1px solid rgba(80, 140, 255, 0.5) !important;
@@ -239,7 +240,7 @@ label, .stFileUploader > label {
     font-size: 0.68rem !important;
 }
 
-/* ── RUN ANALYSIS button ── */
+/* Main action button */
 div.stButton > button {
     background: linear-gradient(135deg, #2a5fff 0%, #1a35cc 100%) !important;
     border: 1px solid rgba(120, 180, 255, 0.5) !important;
@@ -261,7 +262,7 @@ div.stButton > button:hover {
 }
 div.stButton > button:active { transform: translateY(0) !important; }
 
-/* ── Verdict container ── */
+/* Result card */
 .verdict-container {
     text-align: center;
     padding: 2.2rem 2rem;
@@ -301,7 +302,7 @@ div.stButton > button:active { transform: translateY(0) !important; }
 .conf-bar-fake { height:100%; border-radius:4px; background:linear-gradient(90deg,#6b0000,#ff4f4f); box-shadow:0 0 12px rgba(255,79,79,0.7); }
 .conf-bar-unc  { height:100%; border-radius:4px; background:linear-gradient(90deg,#6b5000,#ffcc00); box-shadow:0 0 12px rgba(255,204,0,0.7); }
 
-/* ── Metric pills ── */
+/* Small result boxes */
 .metric-row { display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:1.2rem; }
 .metric-pill {
     background: rgba(15, 25, 70, 0.6);
@@ -320,7 +321,7 @@ div.stButton > button:active { transform: translateY(0) !important; }
 .mp-label { font-family:'Space Mono',monospace; font-size:0.52rem; letter-spacing:0.14em; text-transform:uppercase; color:rgba(255,255,255,0.5); display:block; }
 .mp-value { font-size:1.05rem; font-weight:700; color:#ffffff; display:block; margin-top:0.2rem; }
 
-/* ── XAI box ── */
+/* Explanation box */
 .xai-box {
     background: rgba(15, 25, 70, 0.55);
     border: 1px solid rgba(80, 140, 255, 0.28);
@@ -333,7 +334,7 @@ div.stButton > button:active { transform: translateY(0) !important; }
 .xai-body  { font-family:'Syne',sans-serif; font-size:0.85rem; color:#ffffff; line-height:1.75; }
 .xai-footer { font-family:'Space Mono',monospace; font-size:0.65rem; color:rgba(255,255,255,0.55); margin-top:0.6rem; border-top:1px solid rgba(80,140,255,0.18); padding-top:0.55rem; }
 
-/* ── Expert rows ── */
+/* Expert list */
 .expert-row {
     display:flex; align-items:center; padding:0.55rem 0.9rem;
     background: rgba(12, 20, 60, 0.55);
@@ -350,7 +351,7 @@ div.stButton > button:active { transform: translateY(0) !important; }
 }
 .expert-name { font-family:'Space Mono',monospace; font-size:0.62rem; color:rgba(255,255,255,0.85); min-width:160px; }
 
-/* ── Awaiting box ── */
+/* Empty result state */
 .awaiting-box {
     height:320px; display:flex; flex-direction:column;
     align-items:center; justify-content:center;
@@ -362,7 +363,7 @@ div.stButton > button:active { transform: translateY(0) !important; }
     gap: 0.75rem;
 }
 
-/* ── Hint text ── */
+/* Input hint */
 .hint-text {
     font-family:'Space Mono',monospace; font-size:0.58rem;
     color:rgba(255,255,255,0.55); letter-spacing:0.1em; line-height:1.9;
@@ -370,10 +371,10 @@ div.stButton > button:active { transform: translateY(0) !important; }
     margin-bottom:1rem;
 }
 
-/* ── Spinner ── */
+/* Spinner color */
 .stSpinner > div { border-top-color: #4a8fff !important; }
 
-/* ── Scrollbar ── */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: #03040e; }
 ::-webkit-scrollbar-thumb { background: rgba(80,140,255,0.4); border-radius:4px; }
@@ -382,27 +383,42 @@ div.stButton > button:active { transform: translateY(0) !important; }
 """, unsafe_allow_html=True)
 
 
-# ── Render helpers ─────────────────────────────────────────────────────────────
+# Helper functions
 
 def render_verdict(result: dict):
-    v        = result["final_verdict"]
-    conf     = result["overall_confidence"]
+    v = result["final_verdict"]
+    conf = result["overall_confidence"]
     strength = result["vote_strength"]
-    agree    = result["agreement"]
-    lang     = result["language_detected"]
-    has_img  = result["used_real_image"]
-    best     = result["most_confident_model"]
-    reason   = result.get("uncertainty_reason") or ""
+    agree = result["agreement"]
+    lang = result["language_detected"]
+    has_img = result["used_real_image"]
+    best = result["most_confident_model"]
+    reason = result.get("uncertainty_reason") or ""
 
-    cls = {"Real":"verdict-real","Fake":"verdict-fake","Uncertain":"verdict-uncertain"}
-    txt = {"Real":"v-real","Fake":"v-fake","Uncertain":"v-unc"}
-    bar = {"Real":"conf-bar-real","Fake":"conf-bar-fake","Uncertain":"conf-bar-unc"}
+    cls = {
+        "Real": "verdict-real",
+        "Fake": "verdict-fake",
+        "Uncertain": "verdict-uncertain",
+    }
+    txt = {
+        "Real": "v-real",
+        "Fake": "v-fake",
+        "Uncertain": "v-unc",
+    }
+    bar = {
+        "Real": "conf-bar-real",
+        "Fake": "conf-bar-fake",
+        "Uncertain": "conf-bar-unc",
+    }
 
-    unc_line = (
-        f'<div style="font-family:Space Mono;font-size:0.58rem;color:#ffcc00;'
-        f'margin-top:0.7rem;letter-spacing:0.12em;">'
-        f'REASON: {reason.replace("_"," ").upper()}</div>'
-    ) if v == "Uncertain" else ""
+    if v == "Uncertain":
+        unc_line = (
+            f'<div style="font-family:Space Mono;font-size:0.58rem;color:#ffcc00;'
+            f'margin-top:0.7rem;letter-spacing:0.12em;">'
+            f'REASON: {reason.replace("_", " ").upper()}</div>'
+        )
+    else:
+        unc_line = ""
 
     st.markdown(f"""
     <div class="verdict-container {cls.get(v,'verdict-uncertain')}">
@@ -431,9 +447,15 @@ def render_verdict(result: dict):
 
 def render_expert_table(all_scores: list):
     st.markdown('<div class="card-title">EXPERT BREAKDOWN</div>', unsafe_allow_html=True)
+
     for row in all_scores:
-        c       = "#00f096" if row["predicted_label"] == "Real" else "#ff4f4f"
-        opacity = max(0.3, min(1.0, row["weight"] * 2)) if row["weight"] > 0 else 0.25
+        c = "#00f096" if row["predicted_label"] == "Real" else "#ff4f4f"
+
+        if row["weight"] > 0:
+            opacity = max(0.3, min(1.0, row["weight"] * 2))
+        else:
+            opacity = 0.25
+
         st.markdown(f"""
         <div class="expert-row" style="opacity:{opacity:.2f}">
             <span class="expert-name">{row['model']}</span>
@@ -444,7 +466,7 @@ def render_expert_table(all_scores: list):
 
 
 def render_xai_summary(result: dict):
-    verdict    = result["final_verdict"]
+    verdict = result["final_verdict"]
     all_scores = result["all_scores"]
 
     if verdict == "Uncertain":
@@ -458,9 +480,15 @@ def render_xai_summary(result: dict):
         return
 
     supporters = sorted(
-        [r for r in all_scores if r["predicted_label"] == verdict and r["weight"] > 0.0],
-        key=lambda x: x["weight"] * abs(x["Fake"] - x["Real"]), reverse=True
+        [
+            r
+            for r in all_scores
+            if r["predicted_label"] == verdict and r["weight"] > 0.0
+        ],
+        key=lambda x: x["weight"] * abs(x["Fake"] - x["Real"]),
+        reverse=True,
     )[:3]
+
     if not supporters:
         return
 
@@ -477,10 +505,21 @@ def render_xai_summary(result: dict):
             if key in r["model"].lower() and desc not in datasets_mentioned:
                 datasets_mentioned.append(desc)
 
-    dataset_str   = " and ".join(datasets_mentioned) if datasets_mentioned else "multiple domains"
-    total_active  = len([r for r in all_scores if r["weight"] > 0])
-    strong_voters = len([r for r in all_scores
-        if r["predicted_label"] == verdict and abs(r["Fake"]-r["Real"]) > 0.4 and r["weight"] > 0.3])
+    if datasets_mentioned:
+        dataset_str = " and ".join(datasets_mentioned)
+    else:
+        dataset_str = "multiple domains"
+
+    total_active = len([r for r in all_scores if r["weight"] > 0])
+    strong_voters = len(
+        [
+            r
+            for r in all_scores
+            if r["predicted_label"] == verdict
+            and abs(r["Fake"] - r["Real"]) > 0.4
+            and r["weight"] > 0.3
+        ]
+    )
     color = "#00f096" if verdict == "Real" else "#ff4f4f"
 
     st.markdown(f"""
@@ -498,7 +537,7 @@ def render_xai_summary(result: dict):
     </div>""", unsafe_allow_html=True)
 
 
-# ── Page header ────────────────────────────────────────────────────────────────
+# Page header
 st.markdown("""
 <div class="mosaic-header">
     <div class="mosaic-title">MOSAIC</div>
@@ -508,7 +547,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ── Model load banner ──────────────────────────────────────────────────────────
+# Load the models once
 if "manager_loaded" not in st.session_state:
     st.markdown('<div class="load-banner">⬡ &nbsp; INITIALISING EXPERT MODELS...</div>', unsafe_allow_html=True)
     try:
@@ -531,7 +570,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 col_in, col_res = st.columns([1, 1], gap="large")
 
 
-# ── Left column ────────────────────────────────────────────────────────────────
+# Left side input area
 with col_in:
     st.markdown('<div class="card-title">INPUT</div>', unsafe_allow_html=True)
     st.markdown("""
@@ -549,19 +588,24 @@ with col_in:
 
     img_col, url_col = st.columns(2)
     with img_col:
-        up_file = st.file_uploader("Upload Image (required)", type=["jpg","png","webp","jpeg"])
+        up_file = st.file_uploader(
+            "Upload Image (required)",
+            type=["jpg", "png", "webp", "jpeg"],
+        )
+
     with url_col:
         from scraper import get_scraped_data
+
         url_input = st.text_input("Paste Link", placeholder="Enter URL...", key="url_input_value")
         if url_input and url_input != st.session_state.get("last_scraped_url"):
             with st.spinner("Extracting content..."):
                 try:
                     scraped = get_scraped_data(url_input)
-                    st.session_state["scraped_text"]     = scraped["text"]
-                    st.session_state["scraped_image"]    = scraped["image"]
+                    st.session_state["scraped_text"] = scraped["text"]
+                    st.session_state["scraped_image"] = scraped["image"]
                     st.session_state["last_scraped_url"] = url_input
-                    st.session_state["pending_text"]     = scraped["text"]
-                    st.session_state["scrape_warning"]   = scraped.get("warning")
+                    st.session_state["pending_text"] = scraped["text"]
+                    st.session_state["scrape_warning"] = scraped.get("warning")
                     st.rerun()
                 except Exception as e:
                     st.session_state["last_scraped_url"] = url_input
@@ -579,11 +623,19 @@ with col_in:
         st.markdown(
             f'<div style="font-family:Space Mono;font-size:0.55rem;color:rgba(255,255,255,0.45);'
             f'letter-spacing:0.12em;margin-top:0.3rem;">⬡ SOURCE: {domain}</div>',
-            unsafe_allow_html=True)
+            unsafe_allow_html=True,
+        )
         if st.session_state.get("scrape_warning"):
             st.warning(st.session_state["scrape_warning"])
         if st.button("CLEAR", key="clear_scrape"):
-            for k in ("scraped_text","scraped_image","last_scraped_url","pending_text","url_input_value","scrape_warning"):
+            for k in (
+                "scraped_text",
+                "scraped_image",
+                "last_scraped_url",
+                "pending_text",
+                "url_input_value",
+                "scrape_warning",
+            ):
                 st.session_state.pop(k, None)
             st.session_state["url_input_value"] = ""
             st.rerun()
@@ -592,7 +644,7 @@ with col_in:
     run_analysis = st.button("RUN ANALYSIS", width='stretch')
 
 
-# ── Right column ───────────────────────────────────────────────────────────────
+# Right side result area
 with col_res:
     if run_analysis:
         if not text_input.strip():
@@ -612,15 +664,15 @@ with col_res:
     else:
         st.markdown("""
         <div class="awaiting-box">
-            <div style="font-size:2rem;opacity:0.18;color:#6090ff;">⬡</div>
-            <div style="font-family:Space Mono;font-size:0.7rem;letter-spacing:0.25em;
+        <div style="font-size:2rem;opacity:0.18;color:#6090ff;">⬡</div>
+        <div style="font-family:Space Mono;font-size:0.7rem;letter-spacing:0.25em;
                         color:rgba(255,255,255,0.7);font-weight:700;">AWAITING INPUT</div>
             <div style="font-family:Space Mono;font-size:0.55rem;letter-spacing:0.14em;
                         color:rgba(255,255,255,0.3);">ENTER TEXT AND IMAGE TO BEGIN ANALYSIS</div>
         </div>""", unsafe_allow_html=True)
 
 
-# ── Footer ─────────────────────────────────────────────────────────────────────
+# Footer
 st.markdown("""
 <div style="text-align:center;margin-top:4rem;padding-top:1.5rem;
             border-top:1px solid rgba(60,100,220,0.18);

@@ -4,8 +4,9 @@
 
 ## What It Does
 Our MOSAIC program takes a social media post (a text and image) and classifies it as either **Real**, **Fake**, or **Uncertain**.
-It works by running the input through an ensemble of 28 expert models spreading across 7 different model families
-and 4 dataset domains, which we then combine their votes using weighted ensemble logic. 
+It works by running the input through an ensemble of 28 expert models spread across 7 different model families
+and 4 dataset domains, and combines their votes using weighted ensemble logic. 
+
 Rather than forcing a falsely confident guess on inputs that might seem ambiguous, the system returns `Uncertain` when vote strength or
 agreement falls below a confidence threshold. This is an intentional feature that was added, not a failure.
 
@@ -13,33 +14,41 @@ Keep note that MOSAIC is a pattern-based detector trained on misinformation data
 fact-checker and does not verify claims against external sources in real time.
 
 ## System Architecture
+
+During development, expert models were distributed across multiple available CUDA devices on the university's SSH server to reduce memeory load and support full-ensemble inference.
+
 ```text
 The User's Browser
     │
     ▼
-index.html  (frontend; hosted on the University of Windsor MyWeb)
+index.html (the public/demo frontend)
     │
-    │  fetch() to the Flask backend through an ngrok tunnel
+    │  fetch() to the Flask backend
     ▼
-api.py  (Flask backend; /health, /predict, /scrape)
+api.py (Flask backend; /health, /predict, /scrape)
     │
     ▼
-model_manager.py  (ensemble inference engine)
+model_manager.py (the ensemble inference engine)
     │
     ├── Domain & language routing
     ├── 28 expert models (7 families × 4 dataset domains)
     ├── Weighted ensemble voting
-    │     final weight = domain weight × reliability weight
+    │   └── final_weight = domain_weight × reliability_weight
     └── XAI field generation for frontend display
-          plain-language summary for non-technical users
-          technical expert breakdown and supporting expert list
-          review cues and external fact-check links
+        ├── Plain-language summary for users that are non technical 
+        ├── Technical expert breakdown and supporting expert list
+        └── Review cues and external fact-check links
 ```
 
+The system primarily uses `index.html` for the public-facing demo. For local development and for validation, `index_local_test.html` is used as the dedicated local testing frontend.
+
 Key thresholds in the ensemble:
-- `min_vote_strength (controls how large the ensemble margin must be) = 0.20`
-- `min_agreement (controls how many active experts must align) = 0.65`
-- `ultra_short_min_agreement (is a stricter agreement rule for very short inputs) = 0.68`
+- `min_vote_strength = 0.20`  
+  Controls how large the ensemble vote margin must be before a prediction is accepted.
+- `min_agreement = 0.65`  
+  Controls how many active experts must agree before the system commits to a prediction.
+- `ultra_short_min_agreement = 0.68`  
+  Applies a stricter agreement rule for very short inputs.
 
 ---
 
@@ -51,7 +60,8 @@ mosaic/
 ├── model_manager.py              # Core ensemble engine: routing, weighting, inference, and XAI generation
 ├── api.py                        # Flask backend exposing /health, /predict, and /scrape
 ├── scraper.py                    # URL scraping helper used by the backend
-├── index.html                    # Main public-facing web interface
+├── index.html                    # Main web frontend
+├── index_local_test.html         # Local frontend for testing without ngrok
 ├── mosaic_app.py                 # Streamlit-based demo interface
 │
 ├── benchmark_loader.py           # Loads balanced multimodal benchmark samples
@@ -74,12 +84,108 @@ mosaic/
     ├── api_reference.md          # Endpoint specifications and usage examples
     ├── results.md                # Benchmark methodology, results, and limitations
     └── user_guide.md             # Frontend usage and demo setup instructions
+
 ```
 ## Setup & Installation
-<!-- Amer or shared: Python version, pip install, how to run api.py -->
+> **Note:** This project was developed on the University of Windsor Delta GPU server using a Conda environment. In that environment, `pip install` and `sudo` access were restricted, so dependencies were installed manually through Conda. The included `requirements.txt` documents the main Python dependencies, but the exact setup may need to be adapted to your environment.
 
-## Running the Demo
-<!-- Bhabin: ngrok command, local test path, what to expect -->
+### Requirements
+- Python 3.13 recommended
+- Conda or another Python virtual environment
+- GPU access highly recommended for faster inference speed
+
+> The original deployment distributed expert models across multiple CUDA devices on the university server. If your system has fewer GPUs, you may need to update the device assignments in model_manager.py, and CPU-only execution will be significantly slower.
+
+### 1. Clone the Repository
+
+```bash
+git clone <repo-url>
+cd mosaic
+```
+### 2. Create the Environment
+Using Conda (recommended):
+```bash
+conda create -n mosaic python=3.13
+conda activate mosaic
+```
+Install the required packages using requirements.txt as a reference for the environment setup.
+
+### 3. Download the Pretrained Weights
+The pretrained model weights are not included in the repository due to file size limits. Download the weights from the shared Google Drive folder provided with the submission
+and place all files into the weights/ folder. Do not rename or reorganize the files.
+```
+mosaic/
+├── weights/
+```
+> If the required weight files are missing or placed incorrectly, model_manager.py will not be able to load all expert models!
+
+### 4. Run the Backend
+Start the Flask backend by running:
+```bash
+python api.py
+```
+The Flask backend will start on `http://127.0.0.1:5000`. You can verify that it is running with:
+```bash
+curl http://127.0.0.1:5000/health
+```
+
+### 5. Local Frontend Testing
+
+For local testing, an ngrok setup is not required.
+
+1. Start the Flask backend:
+
+```bash
+python api.py
+```
+2. Serve the frontend locally:
+
+```bash
+python -m http.server 8000
+```
+
+3. Open `index_local_test.html` in your browser through the local server.
+For example:
+
+```text
+http://127.0.0.1:8000/index_local_test.html
+```
+
+Use `index_local_test.html` for local testing so that the public/demo `index.html` file does not need to be edited.
+
+### 6. Optional Public Demo Setup
+
+This step is only needed if you want to expose the backend through the public-facing demo frontend instead of testing locally.
+
+1. Start the Flask backend:
+
+```bash
+python api.py
+```
+
+2. Install and authenticate ngrok using your own ngrok account.
+
+3. Start an ngrok tunnel for port `5000`:
+
+```bash
+./ngrok http 5000
+```
+
+If you are using a reserved ngrok domain, you can run:
+
+```bash
+./ngrok http --url=<your-ngrok-domain> 5000
+```
+
+4. Update the `API_BASE` value in `index.html` to match the ngrok URL.
+
+5. If you are serving the frontend locally instead of using MyWeb, start a simple static server:
+
+```bash
+python -m http.server 8000
+```
+
+Then open the frontend in your browser from the local server.
 
 ## API Endpoints
 <!-- Marc: /health, /predict, /scrape with examples -->

@@ -1,6 +1,6 @@
 # MOSAIC — Cross-Domain Multimodal Fake News Detection
 
-> University of Windsor COMP 4990 4th Year Capstone Project
+> University of Windsor COMP 4990 4th Year Undergraduate Capstone Project
 
 ## What It Does
 Our MOSAIC program takes a social media post (a text and image) and classifies it as either **Real**, **Fake**, or **Uncertain**.
@@ -13,7 +13,35 @@ Keep note that MOSAIC is a pattern-based detector trained on misinformation data
 fact-checker and does not verify claims against external sources in real time.
 
 ## System Architecture
-<!-- Amer: diagram or description of model_manager → api.py → index.html flow -->
+```text
+The User's Browser
+    │
+    ▼
+index.html  (frontend; hosted on the University of Windsor MyWeb)
+    │
+    │  fetch() to the Flask backend through an ngrok tunnel
+    ▼
+api.py  (Flask backend; /health, /predict, /scrape)
+    │
+    ▼
+model_manager.py  (ensemble inference engine)
+    │
+    ├── Domain & language routing
+    ├── 28 expert models (7 families × 4 dataset domains)
+    ├── Weighted ensemble voting
+    │     final weight = domain weight × reliability weight
+    └── XAI field generation for frontend display
+          plain-language summary for non-technical users
+          technical expert breakdown and supporting expert list
+          review cues and external fact-check links
+```
+
+Key thresholds in the ensemble:
+- `min_vote_strength (controls how large the ensemble margin must be) = 0.20`
+- `min_agreement (controls how many active experts must align) = 0.65`
+- `ultra_short_min_agreement (is a stricter agreement rule for very short inputs) = 0.68`
+
+---
 
 ## Project Structure
 <!-- Amer: annotated file tree of core files -->

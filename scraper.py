@@ -9,10 +9,10 @@ Supports:
   - News articles (Playwright + newspaper3k fallback)
   - Reddit posts (no API key needed — uses Reddit's public .json endpoint)
   - Twitter/X posts (via Nitter — open source Twitter frontend, no API key needed)
-  - Facebook public posts (BeautifulSoup)
 
 Unsupported (API restrictions):
   - Instagram (Meta Graph API required)
+  - Facebook (Meta Graph API required)
   - TikTok (no text scraping support)
 
 get_scraped_data(url) is a pure standalone function with no Streamlit

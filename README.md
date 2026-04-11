@@ -44,8 +44,37 @@ Key thresholds in the ensemble:
 ---
 
 ## Project Structure
-<!-- Amer: annotated file tree of core files -->
+Our repository is organized around the ensemble inference engine, frontend/demo interfaces, benchmarking utilities, and model-specific wrappers. Some expert families are stored in dedicated folders, while others are loaded through wrapper modules in the project root.
 
+```
+mosaic/
+├── model_manager.py              # Core ensemble engine: routing, weighting, inference, and XAI generation
+├── api.py                        # Flask backend exposing /health, /predict, and /scrape
+├── scraper.py                    # URL scraping helper used by the backend
+├── index.html                    # Main public-facing web interface
+├── mosaic_app.py                 # Streamlit-based demo interface
+│
+├── benchmark_loader.py           # Loads balanced multimodal benchmark samples
+├── benchmark_seed_sweep.py       # Repeats benchmarks across random seeds
+├── benchmark_exhaustive_eval.py  # Runs multi-size, multi-seed evaluation
+│
+├── results/                      # Final benchmark CSV outputs
+├── multimodal_dataset/           # Dataset splits and paired evaluation samples
+├── weights/                      # Trained model weight files
+│
+├── MoPeD/                        # MoPeD model files
+├── EMAF/                         # EMAF architecture files
+├── COOLANT/                      # COOLANT architecture files
+│
+├── *_wrapper.py                  # Expert model wrapper modules
+├── requirements.txt              # Python dependency list
+│
+└── docs/
+    ├── system_design.md          # Architecture, ensemble logic, and routing design
+    ├── api_reference.md          # Endpoint specifications and usage examples
+    ├── results.md                # Benchmark methodology, results, and limitations
+    └── user_guide.md             # Frontend usage and demo setup instructions
+```
 ## Setup & Installation
 <!-- Amer or shared: Python version, pip install, how to run api.py -->
 

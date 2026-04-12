@@ -294,11 +294,11 @@ The our map for reliability isnt just a guessed preference list. The values are 
 
 ### 8.4 Why the Weibo Path Was Patched Instead of Retrained
 
-In our submission, we decided to focus on integration and the behavior of the ensemble; not full retraining of every expert family due to a lack of time. Because routing issues with the Chinese data were somewhat caused by weight calibration and output-order mismatch (0=Fake or Real), patching the Weibo path was a justified solution for the project.
+In our submission, we decided to focus on integration and the behavior of the ensemble; not full retraining of every expert family. Because routing issues with the Chinese data were somewhat caused by weight calibration, patching the Weibo path was a justified solution for the project.
 
 ## 9. Training Artifacts and Wrapper Integration
 
-Each of the 7 model families came from a separate research implementation. They do not all share a common interface. Some of the models expose a single predict() call, others need a dataset-specific preprocessing, and some also output probabilities in a different class order depending on how they were trained. Making sure to get all of them to behave consistently inside a single ensemble needed a dedicated wrapper for each family and domain combination.
+Each of the 7 model families came from a separate research implementation. They do not all share a common interface. Some of the models expose a single predict() call, others need a dataset-specific preprocessing, and some also output probabilities in a different class order depending on how they were trained. Getting all of them to behave consistently inside a single ensemble needed a dedicated wrapper for each family and domain combination.
 
 The wrapper files (`moped_wrapper.py`, `coolant_wrapper.py`, `emaf_wrapper.py`, and the dataset-specific variants for SpotFake, MVAE, and ATTRNN) handle the differences in preprocessing, tokenization, and output format before anything reaches model_manager.py. By the time `_iter_experts()` shows an expert, it can be they call all be treated equally regardless of which architecture it wraps.
 

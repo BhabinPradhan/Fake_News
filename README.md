@@ -195,7 +195,7 @@ Then open the frontend in your browser from the local server.
 <!-- Marc: /health, /predict, /scrape with examples -->
 
 ## Benchmark Results
-<!-- Darren: summary of 100-case aggregate, point to CSV files -->
+MOSAIC was evaluated on a balanced multimodal benchmark using paired text and image samples, with repeated evaluation across multiple random seeds to ensure stable results. At the 100-case benchmark size, the system achieved approximately **89.5% decided accuracy** with about **54.8% coverage**, meaning predictions are only made when confidence is sufficient. Accuracy is reported on decided cases only, while uncertain cases are intentionally abstained from to improve reliability. For the full evaluation methodology, metrics, and detailed results, see [docs/RESULTS.md](docs/RESULTS.md).
 
 ## Known Limitations
 

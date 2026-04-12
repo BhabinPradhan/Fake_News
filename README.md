@@ -218,3 +218,8 @@ Then open the frontend in your browser from the local server.
 
 ## Team
 <!-- Everyone: names and roles -->
+
+## References
+
+Model families and datasets used in this project are based on prior published work.
+Full references are listed in [`docs/references.md`](docs/references.md).

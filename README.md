@@ -4,8 +4,8 @@
 
 ## What It Does
 Our MOSAIC program takes a social media post (a text and image) and classifies it as either **Real**, **Fake**, or **Uncertain**.
-It works by running the input through an ensemble of 28 expert models spread across 7 different model families
-and 4 dataset domains, and combines their votes using weighted ensemble logic. 
+It works by running the input through an ensemble of 28 expert models spread across 7 different models
+and 4 datasets, and combines their votes using weighted ensemble logic. 
 
 Rather than forcing a falsely confident guess on inputs that might seem ambiguous, the system returns `Uncertain` when vote strength or
 agreement falls below a confidence threshold. This is an intentional feature that was added, not a failure.
@@ -87,7 +87,7 @@ mosaic/
 
 ```
 ## Setup & Installation
-> **Note:** This project was developed on the University of Windsor Delta GPU server using a Conda environment. In that environment, `pip install` and `sudo` access were restricted, so dependencies were installed manually through Conda. The included `requirements.txt` documents the main Python dependencies, but the exact setup may need to be adapted to your environment.
+> **Note:** This project was developed on the University of Windsor Delta GPU server using a Conda environment. In that environment, `pip install` and `sudo` access were restricted, so dependencies were installed manually through Conda. The included `requirements.txt` documents the main Python dependencies, but the exact setup may need to be changed to your environment.
 
 ### Requirements
 - Python 3.13 recommended
@@ -112,15 +112,19 @@ Install the required packages using requirements.txt as a reference for the envi
 
 ### 3. Download the Pretrained Weights
 The pretrained model weights are not included in the repository due to file size limits. Download the weights from the shared Google Drive folder provided with the submission
-and place all files into the weights/ folder. Do not rename or reorganize the files.
+and place all files into the weights/ folder. Do not rename or reorganize the files. Estimated file size for all .pth files ~25GB
 ```
 mosaic/
 ├── weights/
+    ├── spotfake_snopes.pth
+    ├── mvae_snopes.pth
+    ...
+
 ```
 > If the required weight files are missing or placed incorrectly, model_manager.py will not be able to load all expert models!
 
 ### 4. Run the Backend
-Start the Flask backend by running:
+First, start the Flask backend by running:
 ```bash
 python api.py
 ```

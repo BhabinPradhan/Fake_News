@@ -234,7 +234,7 @@ MOSAIC was evaluated on a balanced multimodal benchmark using paired text and im
 |------|------|
 | Amer Odobasic | Ensemble architecture, model integration, benchmarking & evaluation, backend API, project lead |
 | Bhabin Pradhan | Fill in |
-| Darren Vo | Fill in |
+| Darren Vo | Frontend Development (HTML/CSS/JS) & API Integration, Benchmark Evaluation & Results Documentation |
 | Marc Deras | Fill in |
 
 ## References

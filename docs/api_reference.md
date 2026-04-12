@@ -111,7 +111,7 @@ The system uses Playwright and `newspaper3k` for automated extraction. Performan
 | :--- | :--- | :--- | :--- | 
 | **News Articles** | Full | Playwright/newspaper3k | Works on most major news sites | 
 | **Reddit** | Full | Public .json API | No API key required | 
-| **X / Twittere** | Full | Nitter | May fail if Nitter instance is down | 
+| **X / Twitter** | Full | Nitter | May fail if Nitter instance is down | 
 | **Facebook** | None | N/A | Blocked by Meta; use manual upload | 
 | **Instagram** | None | N/A | Blocked by Meta; use manual upload | 
 | **Live Blogs** | Partial | Playwright | Returns warning; text may be fragmented | 

@@ -194,7 +194,27 @@ Then open the frontend in your browser from the local server.
 <!-- Darren: summary of 100-case aggregate, point to CSV files -->
 
 ## Known Limitations
-<!-- Amer: paste/adapt from ProjectSummary.txt limitations section -->
+
+- **MOSAIC is not a live fact-checking system.**  
+  It detects multimodal patterns that is associated with misinformation, but it can't verify claims against external knowledge sources in real time (eg. Asking for verification on a newly developing news story).
+
+- **Out-of-context images being misused remains a difficult task.**  
+  The system will preform best on paired text-image misinformation examples and may not detect cases reliably where a real image is reused in a misleading context.
+
+- **Very short or invented phrases are harder to classify reliably.**  
+  Inputs that fall far outside the training distribution, such as extremely short or vague text, may not have enough information for confident multimodal analysis.
+
+- **Chinese support is still limited.**  
+  Chinese routing into Weibo experts was verified, but end-to-end Chinese evaluation showed class imbalance, so Chinese performance is not included in the main validated benchmark claims.
+
+- **Some websites block scraping.**  
+  The `/scrape` feature depends on external site behavior, and certain domains may reject automated article extraction or image retrieval.
+
+- **`Uncertain` is an intentional output.**  
+  When expert votes are weak or conflicting, MOSAIC abstains rather than forcing a confident but unreliable prediction. This is a safety feature, not a failure.
+
+- **Hardware requirements can be high for the full ensemble.** <br>
+  The original deployment used multiple available CUDA devices on the university server. If you are running the full system on fewer GPUs or CPU-only hardware, it will require configuration changes and reduced inference speed.
 
 ## Team
 <!-- Everyone: names and roles -->

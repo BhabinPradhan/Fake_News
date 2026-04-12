@@ -199,7 +199,6 @@ Then open the frontend in your browser from the local server.
 | `/predict` | `POST` | Primary detection endpoint (Text + Image) |
 | `/scrape` | `POST` | Automated URL extraction and classification |
 
-> [!TIP]
 > For full request/response JSON specifications, example `curl` commands, and scraping platform support, see the [Detailed API Reference](docs/api_reference.md).
 
 

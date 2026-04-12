@@ -192,7 +192,16 @@ python -m http.server 8000
 Then open the frontend in your browser from the local server.
 
 ## API Endpoints
-<!-- Marc: /health, /predict, /scrape with examples -->
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/health` | `GET` | Verifies backend status and ensemble model readiness |
+| `/predict` | `POST` | Primary detection endpoint (Text + Image) |
+| `/scrape` | `POST` | Automated URL extraction and classification |
+
+> [!TIP]
+> For full request/response JSON specifications, example `curl` commands, and scraping platform support, see the [Detailed API Reference](docs/api_reference.md).
+
 
 ## Benchmark Results
 MOSAIC was evaluated on a balanced multimodal benchmark using paired text and image samples, with repeated evaluation across multiple random seeds to ensure stable results. At the 100-case benchmark size, the system achieved approximately **89.5% decided accuracy** with about **54.8% coverage**, meaning predictions are only made when confidence is sufficient. Accuracy is reported on decided cases only, while uncertain cases are intentionally abstained from to improve reliability. For the full evaluation methodology, metrics, and detailed results, see [docs/RESULTS.md](docs/RESULTS.md).

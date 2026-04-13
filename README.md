@@ -3,7 +3,7 @@
 > University of Windsor COMP 4990 4th Year Undergraduate Capstone Project
 
 ## What It Does
-Our MOSAIC program takes a social media post (a text and image) and classifies it as either **Real**, **Fake**, or **Uncertain**.
+Our MOSAIC (Fake_News) program takes a social media post (a text and image) and classifies it as either **Real**, **Fake**, or **Uncertain**.
 It works by running the input through an ensemble of 28 expert models spread across 7 different models
 and 4 datasets, and combines their votes using weighted ensemble logic. 
 
@@ -94,19 +94,20 @@ mosaic/
 - Conda or another Python virtual environment
 - GPU access highly recommended for faster inference speed
 
-> The original deployment distributed expert models across multiple CUDA devices on the university server. If your system has fewer GPUs, you may need to update the device assignments in model_manager.py, and CPU-only execution will be significantly slower.
+> The original deployment distributed expert models across multiple CUDA devices on the university server. If your system has fewer GPUs, you will need to update the device assignments in model_manager.py, and CPU-only execution will be significantly slower.
 
 ### 1. Clone the Repository
 
 ```bash
 git clone <repo-url>
-cd mosaic
+cd Fake_News
 ```
 ### 2. Create the Environment
 Using Conda (recommended):
 ```bash
 conda create -n mosaic python=3.13
 conda activate mosaic
+pip install -r requirements.txt
 ```
 Install the required packages using requirements.txt as a reference for the environment setup.
 
@@ -119,7 +120,6 @@ mosaic/
     ├── spotfake_snopes.pth
     ├── mvae_snopes.pth
     ...
-
 ```
 > If the required weight files are missing or placed incorrectly, model_manager.py will not be able to load all expert models!
 
@@ -137,24 +137,22 @@ curl http://127.0.0.1:5000/health
 
 For local testing, an ngrok setup is not required.
 
-Open two terminals and make sure both commands are run from the project root (Let's use `Example_Folder/` as an example).
+Open two terminals and make sure both commands are run from the project root 
 
 1. Start the Flask backend:
 
 ```bash
-cd /path/to/Example_Folder
+cd /path/to/Fake_News
 python api.py
 ```
 2. Serve the frontend locally:
 
 ```bash
-cd /path/to/Example_Folder
+cd /path/to/Fake_News
 python -m http.server 8000
 ```
 
-3. Open `index_local_test.html` in your browser through the local server.
-For example:
-
+3. Open the local test page in your browser:
 ```text
 http://127.0.0.1:8000/index_local_test.html
 ```
@@ -236,9 +234,9 @@ MOSAIC was evaluated on a balanced multimodal benchmark using paired text and im
 <!-- Everyone: names and roles -->
 | Name | Role |
 |------|------|
-| Amer Odobasic | Ensemble architecture, model integration, benchmarking & evaluation, backend API, project lead |
-| Bhabin Pradhan | Model Training, User Documentation, Research Communication, Frontend support|
-| Darren Vo | Frontend Development (HTML/CSS/JS) & API Integration, Benchmark Evaluation & Results Documentation |
+| Amer Odobasic | Ensemble architecture, model training & integration, benchmarking & evaluation, backend API, project lead |
+| Bhabin Pradhan | Model Training, User Documentation, Research Communication, Frontend updates|
+| Darren Vo | Frontend Development (HTML/CSS/JS) & API Integration, Model training & Benchmark Evaluation with Results Documentation |
 | Marc Deras | URL scraper(news articles, Reddit, Twitter/X), Model training, API reference documentation |
 
 ## References

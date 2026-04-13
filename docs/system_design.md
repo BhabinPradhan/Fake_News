@@ -339,4 +339,9 @@ For this reason, scraped inputs are treated as a convenience feature.
 
 ### 10.4 Scope Limits
 
-The repository does doesn't include a full retraining pipeline for all expert families. Training scripts like MoPeD_weibo.py and emaf_snopes.py are not included. The original model implementations are listed in the references section. The submission focuses on the ensemble layer which includes routing, weighting, abstention logic, and the inference flow is all built around those pretrained experts. Retraining all seven families from scratch was outside the scope with the timing we had, and the integration work was substantial enough on its own.
+This repository does not include a complete retraining pipeline for every expert family used in the ensemble. Some dataset-specific MoPeD source files are included in the repo where they were needed for compatibility, but the same level of retraining support is not provided for all model families.
+
+Because of that, this codebase should mainly be looked at as an inference and integration submission built around pretrained checkpoints, rather than a full end-to-end training reproduction of every model. The main focus of the project is the ensemble system itself, including expert wrapping, routing, weighting, and  abstention logic.
+
+Fully retraining all expert families from scratch was outside the scope of the project.
+

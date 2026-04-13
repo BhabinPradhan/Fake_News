@@ -23,19 +23,15 @@ class CoolantInference:
         self.det_mod = Multi_Model(self.bert_path).to(self.device)
         
         # Load Weights 
-        print(f"Loading COOLANT weights from: {model_path}")
-
         checkpoint = torch.load(model_path, map_location=self.device)
         
         # Matches Weibo and Med-MMHL formats
         if 'det_state_dict' in checkpoint: 
-            print(f"Detected Weibo/MMHL format keys")
             self.det_mod.load_state_dict(checkpoint['det_state_dict'])
             self.clip_mod.load_state_dict(checkpoint['clip_state_dict'])
             
         # Matches XFacta and Snopes formats
         elif 'det' in checkpoint: 
-            print(f"Detected XFacta/Snopes format keys")
             self.det_mod.load_state_dict(checkpoint['det'])
             self.clip_mod.load_state_dict(checkpoint['clip'])
         

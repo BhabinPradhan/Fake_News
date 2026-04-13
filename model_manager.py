@@ -5,10 +5,11 @@ from collections import OrderedDict
 from PIL import Image
 import torch
 
-# Path setup 
-sys.path.append(os.path.join(os.getcwd(), "MoPeD"))
-sys.path.append(os.path.join(os.getcwd(), "COOLANT"))
-sys.path.append(os.path.join(os.getcwd(), "EMAF"))
+# Path setup
+# Put local model folders first so their modules win over similarly named
+# packages that may already exist in the Python environment.
+for local_dir in ("EMAF", "COOLANT", "MoPeD"):
+    sys.path.insert(0, os.path.join(os.getcwd(), local_dir))
 
 #  Wrapper imports
 from moped_wrapper   import MopedInference
@@ -35,8 +36,6 @@ from attrnn_wrapper_snopes   import AttRNNInferenceSnopes
 
 class ModelManager:
     def __init__(self):
-        print("Initializing Global Model Manager...")
-
         # MoPeD 
         self.moped_experts = {
             "xfacta": MopedInference("weights/best_moped_xfacta.pth",    dataset_type='english', device=torch.device('cuda:0')),
@@ -155,8 +154,6 @@ class ModelManager:
         # Abstain / uncertainty thresholds 
         self.min_vote_strength = 0.20
         self.min_agreement     = 0.65
-
-        print("All experts loaded and ready.")
 
     # Language routing
     def _detect_language(self, text):
@@ -287,10 +284,6 @@ class ModelManager:
         add_cue("Urgent or emotional wording", [term for term in urgency_terms if term in lowered or term in text])
         add_cue("Money or scale claims", [term for term in money_terms if term in lowered or term in text])
 
-        number_matches = re.findall(r"\b\d+(?:\.\d+)?%?\b", text)
-        if number_matches:
-            add_cue("Notable numbers", number_matches[:3])
-
         word_count = len(text.split())
         if word_count <= self.ultra_short_max_words:
             add_cue("Very short text", [f"{word_count} words"])
@@ -360,7 +353,7 @@ class ModelManager:
         if not isinstance(text, str) or not text.strip():
             raise ValueError("`text` is required and must be a non-empty string.")
         if not self._has_real_image_input(image_path):
-            raise ValueError("`image_path` is required — this ensemble expects both text and image.")
+            raise ValueError("`image_path` is required. This ensemble needs both text and image.")
 
         img  = self._resolve_input_image(image_path)
         lang = self._detect_language(text)
@@ -613,11 +606,11 @@ class ModelManager:
         print("-" * 75)
 
         for label, expert in self._all_experts_flat().items():
-            res        = expert.predict(text, img)
+            res = expert.predict(text, img)
             raw0, raw1 = res['Real'], res['Fake']
-            raw_pred   = "Fake" if raw1 > raw0 else "Real"
-            order      = self.label_order_map.get(label, "RF")
-            r, f       = self._apply_label_order(label, raw0, raw1)
+            raw_pred = "Fake" if raw1 > raw0 else "Real"
+            order = self.label_order_map.get(label, "RF")
+            r, f  = self._apply_label_order(label, raw0, raw1)
             final_pred = "Fake" if f > r else "Real"
             print(f"  {label:<23} {raw0:>8.3f} {raw1:>8.3f} {raw_pred:>10} {order:>6} {final_pred:>12}")
 

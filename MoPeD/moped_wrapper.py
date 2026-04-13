@@ -14,22 +14,18 @@ class MopedInference:
         if dataset_type == 'weibo':
             # Weibo has unique layer sizes (e.g., fc1 = 200)
             from MoPeD_weibo import MoPeD, Config
-            print(f"Initializing MoPeD Weibo Architecture")
             # We must map the config class to a format the wrapper understands
             self.config = Config()
-            # In your weibo script, the class is called 'MoPeD'
             from MoPeD_weibo import MoPeD as ModelClass
             
         elif 'snopes' in model_path.lower() or 'mmhl' in model_path.lower():
             from MoPeD_snopes import MoPeD_MMHL, Config
-            print(f"Initializing MoPeD Snopes/MMHL Architecture")
             self.config = Config()
             ModelClass = MoPeD_MMHL
             
         else:
             # Default to XFacta (fc1 = 128)
             from MoPeD_xfacta import MoPeD_MMHL, Config
-            print(f"Initializing MoPeD XFacta Architecture")
             self.config = Config()
             ModelClass = MoPeD_MMHL
             
@@ -39,7 +35,6 @@ class MopedInference:
         
         # 2. Initialize the model shell
         # 3. Load Weights (must happen BEFORE building Weibo model so we can read shapes)
-        print(f"Loading MoPeD weights from: {model_path}")
         state_dict = torch.load(model_path, map_location=self.device)
         sd = state_dict.get('model_state_dict', state_dict)
 
@@ -59,7 +54,6 @@ class MopedInference:
                 raise ValueError(
                     f"Invalid Weibo aux dim derived from checkpoint: {self.weibo_aux_dim}"
                 )
-            print(f"  Checkpoint shapes: vocab={vocab_size}, embed_dim={embed_dim}, kernels={kernel_sizes}")
             weibo_dict_config = {
                 'maxlen': 170,
                 'num_classes': 2,

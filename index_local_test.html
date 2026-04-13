@@ -748,7 +748,7 @@
 
         const expandedSimpleSummary = verdictText === "Uncertain"
             ? `${plainSummary} The strongest experts did not agree enough to make a confident call, so MOSAIC is asking the user to verify the source manually.`
-            : `${plainSummary} The decision was influenced most by ${simpleRoleText}, and the system noticed patterns related to ${cueSentence}.`;
+            : `${plainSummary} The decision was influenced most by a ${simpleRoleText}, and the system noticed patterns related to ${cueSentence}.`;
 
         const cueMarkup = reviewCues.length > 0 ? `
             <div class="xai-section-title">Possible Review Cues</div>

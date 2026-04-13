@@ -137,7 +137,6 @@ class McanInference(nn.Module):
         )
 
         # Load weights and move to device
-        print(f"Loading MCAN weights from: {model_path}")
         self.load_state_dict(torch.load(model_path, map_location=self.device))
         self.to(self.device)
         self.eval()

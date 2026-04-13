@@ -882,6 +882,8 @@
 </div>
 
 <script>
+    // Base URL for the backend API. 
+    // You might need to change this to your own ngrok domain if your server is hosted elsewhere.
     const API_BASE = "https://tatum-rotiferous-figurately.ngrok-free.dev";
     let scrapedBase64Data = null;
 
@@ -1113,7 +1115,9 @@
         // These values drive both the simple explanation and the technical view.
         const plainSummary = data.xai_plain_summary || buildFallbackSummary(data, verdictText);
         const plainRoles = Array.isArray(data.xai_plain_roles) ? data.xai_plain_roles : [];
-        const reviewCues = Array.isArray(data.xai_review_cues) ? data.xai_review_cues : [];
+        const reviewCues = Array.isArray(data.xai_review_cues)
+            ? data.xai_review_cues.filter(cue => cue.label !== "Notable numbers")
+            : [];
         const nextSteps = Array.isArray(data.xai_next_steps) ? data.xai_next_steps : [];
         const activeScores = data.all_scores.filter(row => row.weight > 0);
         const supportCount = Number.isFinite(data.xai_support_count)

@@ -137,14 +137,18 @@ curl http://127.0.0.1:5000/health
 
 For local testing, an ngrok setup is not required.
 
+Open two terminals and make sure both commands are run from the project root (Let's use `Example_Folder/` as an example).
+
 1. Start the Flask backend:
 
 ```bash
+cd /path/to/Example_Folder
 python api.py
 ```
 2. Serve the frontend locally:
 
 ```bash
+cd /path/to/Example_Folder
 python -m http.server 8000
 ```
 

@@ -112,8 +112,11 @@ pip install -r requirements.txt
 Install the required packages using requirements.txt as a reference for the environment setup.
 
 ### 3. Download the Pretrained Weights
-The pretrained model weights are not included in the repository due to file size limits. Download the weights from the shared Google Drive folder provided with the submission
-and place all files into the weights/ folder. Do not rename or reorganize the files. Estimated file size for all .pth files ~25GB
+The pretrained model weights are not included in the repository due to file size limits. Download the weights from the shared Google Drive folder:
+```
+https://drive.google.com/drive/folders/1rVOZw68r3f0atIYgAJGwIWEmWF0LFpbU?usp=sharing
+```
+Place all files into the weights/ folder. Do not rename or reorganize the files. Estimated file size for all .pth files ~25GB
 ```
 mosaic/
 ├── weights/

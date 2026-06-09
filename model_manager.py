@@ -5,17 +5,16 @@ from collections import OrderedDict
 from PIL import Image
 import torch
 
-# Path setup
-# Put local model folders first so their modules win over similarly named
-# packages that may already exist in the Python environment.
-for local_dir in ("EMAF", "COOLANT", "MoPeD"):
-    sys.path.insert(0, os.path.join(os.getcwd(), local_dir))
+# Path setup 
+# sys.path.append(os.path.join(os.getcwd(), "MoPeD"))    # disabled for CPU demo
+# sys.path.append(os.path.join(os.getcwd(), "COOLANT"))  # disabled for CPU demo
+# sys.path.append(os.path.join(os.getcwd(), "EMAF"))     # disabled for CPU demo
 
-#  Wrapper imports
-from moped_wrapper   import MopedInference
-from coolant_wrapper import CoolantInference
-from emaf_wrapper    import EmafInference
-from mcan_wrapper    import McanInference
+# #  Wrapper imports
+# from moped_wrapper   import MopedInference    # disabled for CPU demo
+# from coolant_wrapper import CoolantInference  # disabled for CPU demo
+# from emaf_wrapper    import EmafInference     # disabled for CPU demo
+# from mcan_wrapper    import McanInference     # disabled for CPU demo
 
 from spotfake_wrapper_xfacta import SpotFakeInferenceXFacta
 from spotfake_wrapper_weibo  import SpotFakeInferenceWeibo
@@ -33,63 +32,96 @@ from spotfake_wrapper_snopes import SpotFakeInferenceSnopes
 from mvae_wrapper_snopes     import MVAEInferenceSnopes
 from attrnn_wrapper_snopes   import AttRNNInferenceSnopes
 
-
 class ModelManager:
+    def _download_weights(self):
+        from huggingface_hub import hf_hub_download
+        import os
+
+        repo_id = "amerodobasic1/MOSIAC-Demo-Weights"
+        token = os.environ.get("HF_TOKEN")
+        files = [
+            "attrnn_xfacta.pth",
+            "mvae_xfacta.pth",
+            "spotfake_xfacta.pth",
+        ]
+
+        os.makedirs("weights", exist_ok=True)
+
+        for filename in files:
+            dest = os.path.join("weights", filename)
+            if not os.path.exists(dest):
+                print(f"Downloading {filename} from Hugging Face...")
+                hf_hub_download(
+                    repo_id=repo_id,
+                    filename=filename,
+                    local_dir="weights",
+                    token=token,
+                )
+                print(f"{filename} gtg")
+            else:
+                print(f"{filename} already present, skipping download")
+
     def __init__(self):
+        print("Initializing Global Model Manager...")
+        # CPU demo mode: 3 experts only. See full system for 28-expert multi-GPU setup.
+
+        # For the demo, the weights from huggingface needs to be downloaded if not already present 
+        self._download_weights()
+
         # MoPeD 
         self.moped_experts = {
-            "xfacta": MopedInference("weights/best_moped_xfacta.pth",    dataset_type='english', device=torch.device('cuda:0')),
-            "snopes": MopedInference("weights/best_moped_snopes.pth",     dataset_type='english', device=torch.device('cuda:0')),
-            "weibo":  MopedInference("weights/best_moped_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:1')),
-            "mmhl":   MopedInference("weights/best_moped_mmhl_fold0.pth", dataset_type='english', device=torch.device('cuda:1')),
+            # "xfacta": MopedInference("weights/best_moped_xfacta.pth",    dataset_type='english', device=torch.device('cpu')),
+            # "snopes": MopedInference("weights/best_moped_snopes.pth",     dataset_type='english', device=torch.device('cpu')),
+            # "weibo":  MopedInference("weights/best_moped_weibo.pth",      dataset_type='weibo',   device=torch.device('cpu')),
+            # "mmhl":   MopedInference("weights/best_moped_mmhl_fold0.pth", dataset_type='english', device=torch.device('cpu')),
         }
 
         # COOLANT 
         self.coolant_experts = {
-            "xfacta": CoolantInference("weights/best_model_coolant_xfacta.pth",    device=torch.device('cuda:0')),
-            "snopes": CoolantInference("weights/best_model_coolant_multimodal.pth", device=torch.device('cuda:1')),
-            "weibo":  CoolantInference("weights/best_coolant_weibo.pth",            device=torch.device('cuda:2')),
-            "mmhl":   CoolantInference("weights/best_model_coolant_mmhl_fold4.pth", device=torch.device('cuda:3')),
+            # "xfacta": CoolantInference("weights/best_model_coolant_xfacta.pth",    device=torch.device('cpu')),
+            # "snopes": CoolantInference("weights/best_model_coolant_multimodal.pth", device=torch.device('cpu')),
+            # "weibo":  CoolantInference("weights/best_coolant_weibo.pth",            device=torch.device('cpu')),
+            # "mmhl":   CoolantInference("weights/best_model_coolant_mmhl_fold4.pth", device=torch.device('cpu')),
         }
 
         # EMAF
         self.emaf_experts = {
-            "xfacta": EmafInference("weights/best_emaf_xfacta.pth",    lang='en', device=torch.device('cuda:0')),
-            "snopes": EmafInference("weights/best_emaf_multimodal.pth", lang='en', device=torch.device('cuda:1')),
-            "weibo":  EmafInference("weights/best_emaf_weibo.pth",      lang='zh', device=torch.device('cuda:2')),
-            "mmhl":   EmafInference("weights/best_emaf_mmhl_fold3.pth", lang='en', device=torch.device('cuda:3')),
+            # "xfacta": EmafInference("weights/best_emaf_xfacta.pth",    lang='en', device=torch.device('cpu')),
+            # "snopes": EmafInference("weights/best_emaf_multimodal.pth", lang='en', device=torch.device('cpu')),
+            # "weibo":  EmafInference("weights/best_emaf_weibo.pth",      lang='zh', device=torch.device('cpu')),
+            # "mmhl":   EmafInference("weights/best_emaf_mmhl_fold3.pth", lang='en', device=torch.device('cpu')),
         }
 
         # MCAN
         self.mcan_experts = {
-            "xfacta": McanInference("weights/best_mcan_xfacta.pth",    dataset_type='english', device=torch.device('cuda:0')),
-            "snopes": McanInference("weights/best_mcan_snopes_6.pth",   dataset_type='english', device=torch.device('cuda:1')),
-            "weibo":  McanInference("weights/best_mcan_weibo.pth",      dataset_type='weibo',   device=torch.device('cuda:2')),
-            "mmhl":   McanInference("weights/best_mcan_mmhl_fold0.pth", dataset_type='english', device=torch.device('cuda:3')),
+            # "xfacta": McanInference("weights/best_mcan_xfacta.pth",    dataset_type='english', device=torch.device('cpu')),
+            # "snopes": McanInference("weights/best_mcan_snopes_6.pth",   dataset_type='english', device=torch.device('cpu')),
+            # "weibo":  McanInference("weights/best_mcan_weibo.pth",      dataset_type='weibo',   device=torch.device('cpu')),
+            # "mmhl":   McanInference("weights/best_mcan_mmhl_fold0.pth", dataset_type='english', device=torch.device('cpu')),
         }
 
         # SpotFake 
         self.spotfake_experts = {
-            "xfacta": SpotFakeInferenceXFacta("weights/spotfake_xfacta.pth", device=torch.device('cuda:0')),
-            "weibo":  SpotFakeInferenceWeibo("weights/spotfake_weibo.pth",   device=torch.device('cuda:1')),
-            "mmhl":   SpotFakeInference("weights/best_spotfake_med.pth",     device=torch.device('cuda:2')),
-            "snopes": SpotFakeInferenceSnopes("weights/spotfake_snopes.pth", device=torch.device('cuda:3')),
+            "xfacta": SpotFakeInferenceXFacta("weights/spotfake_xfacta.pth", device=torch.device('cpu')),
+            # "weibo":  SpotFakeInferenceWeibo("weights/spotfake_weibo.pth",   device=torch.device('cpu')),
+            # "mmhl":   SpotFakeInference("weights/best_spotfake_med.pth",     device=torch.device('cpu')),
+            # "snopes": SpotFakeInferenceSnopes("weights/spotfake_snopes.pth", device=torch.device('cpu')),
         }
 
         # MVAE
         self.mvae_experts = {
-            "xfacta": MVAEInferenceXFacta("weights/mvae_xfacta.pth",  device=torch.device('cuda:0')),
-            "weibo":  MVAEInferenceWeibo("weights/mvae_weibo.pth",     device=torch.device('cuda:1')),
-            "mmhl":   MVAEInference("weights/best_mvae_med.pth",       device=torch.device('cuda:2')),
-            "snopes": MVAEInferenceSnopes("weights/mvae_snopes.pth",   device=torch.device('cuda:3')),
+            "xfacta": MVAEInferenceXFacta("weights/mvae_xfacta.pth",  device=torch.device('cpu')),
+            # "weibo":  MVAEInferenceWeibo("weights/mvae_weibo.pth",     device=torch.device('cpu')),
+            # "mmhl":   MVAEInference("weights/best_mvae_med.pth",       device=torch.device('cpu')),
+            # "snopes": MVAEInferenceSnopes("weights/mvae_snopes.pth",   device=torch.device('cpu')),
         }
 
         # ATTRNN 
         self.attrnn_experts = {
-            "xfacta": AttRNNInferenceXFacta("weights/attrnn_xfacta.pth", device=torch.device('cuda:0')),
-            "weibo":  AttRNNInferenceWeibo("weights/attrnn_weibo.pth",   device=torch.device('cuda:1')),
-            "mmhl":   AttRNNInference("weights/best_attrnn_med.pth",     device=torch.device('cuda:2')),
-            "snopes": AttRNNInferenceSnopes("weights/attrnn_snopes.pth", device=torch.device('cuda:3')),
+            "xfacta": AttRNNInferenceXFacta("weights/attrnn_xfacta.pth", device=torch.device('cpu')),
+            # "weibo":  AttRNNInferenceWeibo("weights/attrnn_weibo.pth",   device=torch.device('cpu')),
+            # "mmhl":   AttRNNInference("weights/best_attrnn_med.pth",     device=torch.device('cpu')),
+            # "snopes": AttRNNInferenceSnopes("weights/attrnn_snopes.pth", device=torch.device('cpu')),
         }
 
         # Per-expert reliability weights
@@ -154,6 +186,8 @@ class ModelManager:
         # Abstain / uncertainty thresholds 
         self.min_vote_strength = 0.20
         self.min_agreement     = 0.65
+
+        print("All experts loaded and ready.")
 
     # Language routing
     def _detect_language(self, text):
@@ -284,6 +318,10 @@ class ModelManager:
         add_cue("Urgent or emotional wording", [term for term in urgency_terms if term in lowered or term in text])
         add_cue("Money or scale claims", [term for term in money_terms if term in lowered or term in text])
 
+        number_matches = re.findall(r"\b\d+(?:\.\d+)?%?\b", text)
+        if number_matches:
+            add_cue("Notable numbers", number_matches[:3])
+
         word_count = len(text.split())
         if word_count <= self.ultra_short_max_words:
             add_cue("Very short text", [f"{word_count} words"])
@@ -353,7 +391,7 @@ class ModelManager:
         if not isinstance(text, str) or not text.strip():
             raise ValueError("`text` is required and must be a non-empty string.")
         if not self._has_real_image_input(image_path):
-            raise ValueError("`image_path` is required. This ensemble needs both text and image.")
+            raise ValueError("`image_path` is required — this ensemble expects both text and image.")
 
         img  = self._resolve_input_image(image_path)
         lang = self._detect_language(text)
@@ -399,14 +437,13 @@ class ModelManager:
         # Calculate base confidence 
         confidence = 0.5 + 0.5 * (vote_strength * agreement_weight)
 
-        # Apply anchor boost logic
+        # Applying the anchor boost logic
         if lang == "zh":
-            anchor_models = ["MoPeD (weibo)", "COOLANT (weibo)", "MCAN (weibo)"]
+            anchor_models = []  # no Chinese-domain experts in the demo
         elif is_short_text:
-            # Short-text anchors should reflect social/caption style rather than long-form articles.
-            anchor_models = ["MoPeD (xfacta)", "COOLANT (xfacta)", "MCAN (xfacta)"]
+            anchor_models = ["SpotFake (xfacta)", "MVAE (xfacta)"]
         else:
-            anchor_models = ["MoPeD (snopes)", "COOLANT (snopes)", "MCAN (snopes)"]
+            anchor_models = ["MVAE (xfacta)", "ATTRNN (xfacta)"]
 
         anchor_votes = [r for r in all_results if r["model"] in anchor_models]
         anchor_unanimous = len(anchor_votes) > 0 and all(
@@ -606,11 +643,11 @@ class ModelManager:
         print("-" * 75)
 
         for label, expert in self._all_experts_flat().items():
-            res = expert.predict(text, img)
+            res        = expert.predict(text, img)
             raw0, raw1 = res['Real'], res['Fake']
-            raw_pred = "Fake" if raw1 > raw0 else "Real"
-            order = self.label_order_map.get(label, "RF")
-            r, f  = self._apply_label_order(label, raw0, raw1)
+            raw_pred   = "Fake" if raw1 > raw0 else "Real"
+            order      = self.label_order_map.get(label, "RF")
+            r, f       = self._apply_label_order(label, raw0, raw1)
             final_pred = "Fake" if f > r else "Real"
             print(f"  {label:<23} {raw0:>8.3f} {raw1:>8.3f} {raw_pred:>10} {order:>6} {final_pred:>12}")
 

@@ -1,9 +1,10 @@
 FROM python:3.10-slim
 
-# Install system dependencies some ML packages need
+# Install system dependencies since some ML packages are needed
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

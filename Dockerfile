@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Install system dependencies since some ML packages are needed
 RUN apt-get update && apt-get install -y \

@@ -14,9 +14,9 @@ scipy==1.16.3
 spacy==3.8.11
 streamlit==1.55.0
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.1.0+cpu
-torchvision==0.16.0+cpu
-torchaudio==2.1.0+cpu
+torch==2.4.0+cpu
+torchvision==0.19.0+cpu
+torchaudio==2.4.0+cpu
 timm==1.0.24
 tqdm==4.67.1
 transformers==4.57.3

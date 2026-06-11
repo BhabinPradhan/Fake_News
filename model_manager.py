@@ -37,7 +37,7 @@ class ModelManager:
         from huggingface_hub import hf_hub_download
         import os
 
-        repo_id = "amerodobasic1/MOSIAC-Demo-Weights"
+        repo_id = "amerodobasic1/MOSIAC_Demo_Models"
         token = os.environ.get("HF_TOKEN")
         files = [
             "attrnn_xfacta.pth",

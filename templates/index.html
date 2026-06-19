@@ -6,7 +6,6 @@
     <title>MOSAIC — Fake News Detector</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
-
         body {
             font-family: 'Syne', sans-serif;
             background-color: #03040e;
@@ -882,7 +881,6 @@
 </div>
 
 <script>
-    const API_BASE = "https://tatum-rotiferous-figurately.ngrok-free.dev";
     let scrapedBase64Data = null;
 
     // Cache the page elements we update often during the demo flow.
@@ -1299,7 +1297,7 @@
 
         scrapeBtn.innerText = "...";
         try {
-            const scrapeResponse = await fetch(`${API_BASE}/scrape`, {
+            const scrapeResponse = await fetch("/scrape", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -1362,7 +1360,7 @@
             submitBtn.innerText = "ANALYZING...";
             submitBtn.style.opacity = "0.5";
 
-            const response = await fetch(`${API_BASE}/predict`, {
+            const response = await fetch("/predict", {
                 method: "POST",
                 headers: {
                     "ngrok-skip-browser-warning": "true"

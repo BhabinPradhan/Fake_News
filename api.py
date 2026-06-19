@@ -1,10 +1,24 @@
+"""
+api.py
+------
+Flask backend for MOSAIC — Multimodal Fake News Detection System.
+Exposes two endpoints:
+  POST /predict  — runs the ensemble on text + image
+  POST /scrape   — scrapes text and image from a URL
+
+Run with:
+    python api.py
+Or for production:
+    gunicorn -w 1 -b 0.0.0.0:5000 api:app
+"""
+
 import os
 import sys
 import tempfile
 import base64
 from io import BytesIO
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from PIL import Image
 
@@ -41,6 +55,10 @@ def sanitize_result(result):
         score["margin"] = round(float(score["margin"]), 3)
     return result
 
+# Basic route to serve the frontend (the index.html) if it is needed
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 # POST /predict
 # - text  (string)  : the post text or headline

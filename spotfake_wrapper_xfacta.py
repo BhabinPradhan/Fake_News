@@ -6,11 +6,14 @@ from transformers import BertTokenizer, BertModel
 import torch.nn.functional as F
 
 class SpotFakeModelXFacta(nn.Module):
-    def __init__(self):
+    def __init__(self, shared_bert=None, shared_resnet=None):
         super().__init__()
-        self.bert = BertModel.from_pretrained('bert-base-chinese')
-        resnet = models.resnet50(weights='DEFAULT')
-        self.resnet = nn.Sequential(*list(resnet.children())[:-1])
+        self.bert = shared_bert if shared_bert is not None else BertModel.from_pretrained('bert-base-chinese')
+        if shared_resnet is not None:
+            self.resnet = shared_resnet
+        else:
+            resnet = models.resnet50(weights='DEFAULT')
+            self.resnet = nn.Sequential(*list(resnet.children())[:-1])
         self.fc = nn.Linear(768 + 2048, 2)
 
     def forward(self, ids, mask, imgs):
@@ -20,11 +23,20 @@ class SpotFakeModelXFacta(nn.Module):
         return self.fc(torch.cat([t, v], 1))
 
 class SpotFakeInferenceXFacta:
-    def __init__(self, model_path="/home/vongoct/checkpoints/spotfake_xfacta.pth", device=None):
+    def __init__(self, model_path="/home/vongoct/checkpoints/spotfake_xfacta.pth", device=None,
+                 shared_bert=None, shared_resnet=None):
         self.device = device if device else torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-        self.model = SpotFakeModelXFacta().to(self.device)
-        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
+        self.model = SpotFakeModelXFacta(shared_bert=shared_bert, shared_resnet=shared_resnet).to(self.device)
+        state_dict = torch.load(model_path, map_location=self.device)
+        if shared_bert is not None or shared_resnet is not None:
+            state_dict = {
+                key: value for key, value in state_dict.items()
+                if not key.startswith(("bert.", "resnet."))
+            }
+            self.model.load_state_dict(state_dict, strict=False)
+        else:
+            self.model.load_state_dict(state_dict)
         self.model.eval()
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),

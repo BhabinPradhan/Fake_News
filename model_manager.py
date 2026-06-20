@@ -33,6 +33,16 @@ from mvae_wrapper_snopes     import MVAEInferenceSnopes
 from attrnn_wrapper_snopes   import AttRNNInferenceSnopes
 
 class ModelManager:
+    def _load_shared_xfacta_backbones(self, device):
+        from transformers import BertModel
+        from torchvision import models
+        import torch.nn as nn
+
+        shared_bert = BertModel.from_pretrained('bert-base-chinese').to(device)
+        resnet = models.resnet50(weights='DEFAULT')
+        shared_resnet = nn.Sequential(*list(resnet.children())[:-1]).to(device)
+        return shared_bert, shared_resnet
+
     def _download_weights(self):
         from huggingface_hub import hf_hub_download
         import os
@@ -67,6 +77,8 @@ class ModelManager:
 
         # For the demo, the weights from huggingface needs to be downloaded if not already present 
         self._download_weights()
+        xfacta_device = torch.device('cpu')
+        shared_xfacta_bert, shared_xfacta_resnet = self._load_shared_xfacta_backbones(xfacta_device)
 
         # MoPeD 
         self.moped_experts = {
@@ -102,7 +114,12 @@ class ModelManager:
 
         # SpotFake 
         self.spotfake_experts = {
-            "xfacta": SpotFakeInferenceXFacta("weights/spotfake_xfacta.pth", device=torch.device('cpu')),
+            "xfacta": SpotFakeInferenceXFacta(
+                "weights/spotfake_xfacta.pth",
+                device=xfacta_device,
+                shared_bert=shared_xfacta_bert,
+                shared_resnet=shared_xfacta_resnet,
+            ),
             # "weibo":  SpotFakeInferenceWeibo("weights/spotfake_weibo.pth",   device=torch.device('cpu')),
             # "mmhl":   SpotFakeInference("weights/best_spotfake_med.pth",     device=torch.device('cpu')),
             # "snopes": SpotFakeInferenceSnopes("weights/spotfake_snopes.pth", device=torch.device('cpu')),
@@ -110,7 +127,12 @@ class ModelManager:
 
         # MVAE
         self.mvae_experts = {
-            "xfacta": MVAEInferenceXFacta("weights/mvae_xfacta.pth",  device=torch.device('cpu')),
+            "xfacta": MVAEInferenceXFacta(
+                "weights/mvae_xfacta.pth",
+                device=xfacta_device,
+                shared_bert=shared_xfacta_bert,
+                shared_resnet=shared_xfacta_resnet,
+            ),
             # "weibo":  MVAEInferenceWeibo("weights/mvae_weibo.pth",     device=torch.device('cpu')),
             # "mmhl":   MVAEInference("weights/best_mvae_med.pth",       device=torch.device('cpu')),
             # "snopes": MVAEInferenceSnopes("weights/mvae_snopes.pth",   device=torch.device('cpu')),
@@ -118,7 +140,12 @@ class ModelManager:
 
         # ATTRNN 
         self.attrnn_experts = {
-            "xfacta": AttRNNInferenceXFacta("weights/attrnn_xfacta.pth", device=torch.device('cpu')),
+            "xfacta": AttRNNInferenceXFacta(
+                "weights/attrnn_xfacta.pth",
+                device=xfacta_device,
+                shared_bert=shared_xfacta_bert,
+                shared_resnet=shared_xfacta_resnet,
+            ),
             # "weibo":  AttRNNInferenceWeibo("weights/attrnn_weibo.pth",   device=torch.device('cpu')),
             # "mmhl":   AttRNNInference("weights/best_attrnn_med.pth",     device=torch.device('cpu')),
             # "snopes": AttRNNInferenceSnopes("weights/attrnn_snopes.pth", device=torch.device('cpu')),

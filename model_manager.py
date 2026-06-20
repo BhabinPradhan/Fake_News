@@ -117,8 +117,8 @@ class ModelManager:
             "xfacta": SpotFakeInferenceXFacta(
                 "weights/spotfake_xfacta.pth",
                 device=xfacta_device,
-                shared_bert=shared_xfacta_bert,
-                shared_resnet=shared_xfacta_resnet,
+                shared_bert=None,
+                shared_resnet=None,
             ),
             # "weibo":  SpotFakeInferenceWeibo("weights/spotfake_weibo.pth",   device=torch.device('cpu')),
             # "mmhl":   SpotFakeInference("weights/best_spotfake_med.pth",     device=torch.device('cpu')),
@@ -130,8 +130,8 @@ class ModelManager:
             "xfacta": MVAEInferenceXFacta(
                 "weights/mvae_xfacta.pth",
                 device=xfacta_device,
-                shared_bert=shared_xfacta_bert,
-                shared_resnet=shared_xfacta_resnet,
+                shared_bert=None,
+                shared_resnet=None,
             ),
             # "weibo":  MVAEInferenceWeibo("weights/mvae_weibo.pth",     device=torch.device('cpu')),
             # "mmhl":   MVAEInference("weights/best_mvae_med.pth",       device=torch.device('cpu')),
@@ -143,8 +143,8 @@ class ModelManager:
             "xfacta": AttRNNInferenceXFacta(
                 "weights/attrnn_xfacta.pth",
                 device=xfacta_device,
-                shared_bert=shared_xfacta_bert,
-                shared_resnet=shared_xfacta_resnet,
+                shared_bert=None,
+                shared_resnet=None,
             ),
             # "weibo":  AttRNNInferenceWeibo("weights/attrnn_weibo.pth",   device=torch.device('cpu')),
             # "mmhl":   AttRNNInference("weights/best_attrnn_med.pth",     device=torch.device('cpu')),
